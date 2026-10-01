@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Task Roulette</title>
+<title>Task Roulette 🎡 Focus & Daily Streak</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎡</text></svg>">
 <style>
 /* ═══════════════════════════════════════════
-   TOKENS
+   DESIGN TOKENS
 ═══════════════════════════════════════════ */
 :root {
   --bg:         #f4f6fb;
@@ -88,7 +88,7 @@ ul{list-style:none}
 .header-inner {
   max-width: 1180px;
   margin: 0 auto;
-  padding: .9rem 1.5rem;
+  padding: .85rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -98,7 +98,7 @@ ul{list-style:none}
   display: flex;
   align-items: center;
   gap: .55rem;
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   font-weight: 900;
   letter-spacing: -.4px;
   background: linear-gradient(135deg,#6d28d9,#ec4899);
@@ -107,7 +107,40 @@ ul{list-style:none}
   background-clip: text;
 }
 .logo-icon{font-size:1.4rem;-webkit-text-fill-color:initial}
-.hdr-right{display:flex;align-items:center;gap:.55rem}
+.hdr-right{display:flex;align-items:center;gap:.6rem}
+
+/* Profile Switcher Pill in Header */
+.profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.32rem 0.8rem;
+  border-radius: 50px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 700;
+  transition: all var(--dur);
+}
+.profile-btn:hover {
+  border-color: var(--p);
+  color: var(--p);
+  transform: translateY(-1px);
+}
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--p), #ec4899);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .icon-btn {
   width: 36px;height: 36px;border-radius: 50%;
   display: flex;align-items: center;justify-content: center;
@@ -325,7 +358,6 @@ ul{list-style:none}
 /* ═══════════════════════════════════════════
    WHEEL CARD
 ═══════════════════════════════════════════ */
-.wheel-card{}
 .wheel-body{
   padding:1.35rem;
   display:flex;flex-direction:column;align-items:center;gap:1.1rem;
@@ -333,9 +365,8 @@ ul{list-style:none}
 .wheel-stage{
   position:relative;
   width:100%;max-width:330px;
-  padding-top:18px; /* room for needle */
+  padding-top:18px;
 }
-/* SVG Needle */
 .needle-wrap{
   position:absolute;top:0;left:50%;transform:translateX(-50%);
   z-index:5;pointer-events:none;
@@ -352,7 +383,6 @@ ul{list-style:none}
   box-shadow:0 0 0 6px var(--surface),0 0 0 8px var(--p),0 14px 40px rgba(109,40,217,.35);
 }
 
-/* Winner banner */
 .winner-banner{
   width:100%;padding:.9rem 1.1rem;border-radius:var(--r-sm);
   background:linear-gradient(135deg,#6d28d9,#ec4899);
@@ -444,7 +474,99 @@ ul{list-style:none}
 .t-reset:hover{border-color:var(--p)}
 
 /* ═══════════════════════════════════════════
-   TOAST
+   PROFILE MODAL
+═══════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sh3);
+  width: 100%;
+  max-width: 420px;
+  padding: 1.4rem;
+  animation: popUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+.modal-header h3 { font-size: 1.15rem; font-weight: 800; }
+.modal-close-btn { font-size: 1.5rem; color: var(--muted); line-height: 1; }
+.modal-close-btn:hover { color: var(--text); }
+.modal-subtext { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.1rem; }
+.modal-field { display: flex; flex-direction: column; gap: 0.4rem; }
+.modal-field label { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.profile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.profile-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--r-sm);
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+}
+.profile-item.active {
+  border-color: var(--p);
+  background: var(--p-xlight);
+}
+.btn-switch-user {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--r-xs);
+  background: var(--p);
+  color: #fff;
+  transition: all var(--dur);
+}
+.btn-switch-user:hover { background: var(--p-light); }
+.btn-del-user {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.4rem;
+  color: var(--muted);
+  margin-left: 0.3rem;
+}
+.btn-del-user:hover { color: var(--red); }
+.btn-new-profile {
+  width: 100%;
+  margin-top: 0.7rem;
+  padding: 0.6rem;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--p);
+  background: var(--surface2);
+  transition: all var(--dur);
+}
+.btn-new-profile:hover {
+  border-color: var(--p);
+  background: var(--p-xlight);
+}
+
+/* ═══════════════════════════════════════════
+   TOAST & CONFETTI
 ═══════════════════════════════════════════ */
 #toast-rack{
   position:fixed;bottom:1.5rem;right:1.5rem;
@@ -467,9 +589,6 @@ ul{list-style:none}
 .toast.warning{border-left:4px solid var(--amber)}
 .toast.error  {border-left:4px solid var(--red)}
 
-/* ═══════════════════════════════════════════
-   CONFETTI CANVAS
-═══════════════════════════════════════════ */
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:99999}
 </style>
 </head>
@@ -483,6 +602,12 @@ ul{list-style:none}
       <span class="logo-icon">🎡</span> Task Roulette
     </div>
     <div class="hdr-right">
+      <!-- Profile Button -->
+      <button class="profile-btn" id="profileBtn" onclick="openProfileModal()" title="Switch or edit profile">
+        <span class="user-avatar" id="avatarText">👤</span>
+        <span id="userDisplayName">User</span>
+        <span style="font-size:0.75rem;opacity:0.6;">▾</span>
+      </button>
       <button class="icon-btn" id="sndBtn" onclick="toggleSound()" title="Sound">🔊</button>
       <button class="icon-btn" onclick="toggleTheme()" title="Theme">🌓</button>
     </div>
@@ -492,7 +617,6 @@ ul{list-style:none}
 <!-- ─── STREAK BANNER ─── -->
 <div class="streak-banner">
   <div class="streak-inner">
-    <!-- Flame + text -->
     <div class="streak-left">
       <div class="flame-wrap off" id="flameBox">🔥</div>
       <div class="streak-info">
@@ -503,11 +627,10 @@ ul{list-style:none}
         <p id="sDesc">Checking your progress…</p>
       </div>
     </div>
-    <!-- Stats + week dots -->
     <div class="streak-right">
       <div class="streak-stat">
         <div class="val" id="sBest">—</div>
-        <div class="lbl">Best</div>
+        <div class="lbl">Best Record</div>
       </div>
       <div class="streak-stat">
         <div class="val" id="sTotal">—</div>
@@ -575,9 +698,9 @@ ul{list-style:none}
           <canvas id="wcanvas" width="330" height="330" onclick="doSpin()" title="Click to spin!"></canvas>
         </div>
         <div class="winner-banner" id="winBanner">
-          <div class="wb-label">🎉 Spin Result</div>
+          <div class="wb-label">🎉 Selected For Focus</div>
           <div class="wb-task" id="winText">—</div>
-          <button class="wb-btn" onclick="startFromWinner()">▶ Start Timer</button>
+          <button class="wb-btn" onclick="startFromWinner()">▶ Start Timer With This Task</button>
         </div>
         <button class="btn-spin" id="spinBtn" onclick="doSpin()">🎰 SPIN THE WHEEL</button>
       </div>
@@ -623,6 +746,31 @@ ul{list-style:none}
   </div>
 </div>
 
+<!-- Profile Modal -->
+<div class="modal-backdrop" id="profileModal" onclick="closeProfileModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>👤 User Profile</h3>
+      <button class="modal-close-btn" onclick="closeProfileModal()">&times;</button>
+    </div>
+    <p class="modal-subtext">Each user has their own separate tasks, roulette wheel, and daily streak.</p>
+    
+    <div class="modal-field">
+      <label>Display Name</label>
+      <div style="display:flex; gap:0.5rem;">
+        <input type="text" id="profileNameInput" class="add-input" placeholder="Your name (e.g. Dhiraj)" maxlength="30" />
+        <button class="btn-add" onclick="saveProfileName()">Save</button>
+      </div>
+    </div>
+
+    <div style="margin-top:1.3rem;">
+      <label style="font-size:0.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">Switch Profile</label>
+      <div class="profile-list" id="profileListContainer"></div>
+      <button class="btn-new-profile" onclick="createNewProfile()">＋ Create New Profile</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast rack -->
 <div id="toast-rack"></div>
 
@@ -636,7 +784,7 @@ const PALETTE = [
   '#dc2626','#db2777','#2563eb','#65a30d',
   '#ea580c','#7c3aed','#0d9488','#c026d3'
 ];
-const CIRC = 2 * Math.PI * 85; // ring circumference
+const CIRC = 2 * Math.PI * 85;
 
 /* ════════════════════════════════════════════
    STATE
@@ -644,7 +792,7 @@ const CIRC = 2 * Math.PI * 85; // ring circumference
 let tasks       = [];
 let filter      = 'all';
 let focusId     = null;
-let angle       = 0;       // wheel rotation in radians
+let angle       = 0;
 let spinning    = false;
 let rafId       = null;
 let lastSeg     = -1;
@@ -653,6 +801,129 @@ let audioCtx    = null;
 let timerSecs   = 600;
 let timerTotal  = 600;
 let timerIv     = null;
+
+/* ════════════════════════════════════════════
+   USER PROFILES (MULTI-USER ENGINE)
+════════════════════════════════════════════ */
+function getProfiles(){
+  try {
+    const list = JSON.parse(localStorage.getItem('tr_profiles') || '[]');
+    if (Array.isArray(list) && list.length > 0) return list;
+  } catch(e) {}
+  const def = [{ id: 'user_' + Math.random().toString(36).substring(2, 9), name: 'Dhiraj' }];
+  localStorage.setItem('tr_profiles', JSON.stringify(def));
+  localStorage.setItem('tr_active_user', def[0].id);
+  return def;
+}
+
+function getActiveUserId(){
+  let id = localStorage.getItem('tr_active_user');
+  const profiles = getProfiles();
+  if (!id || !profiles.some(p => p.id === id)) {
+    id = profiles[0].id;
+    localStorage.setItem('tr_active_user', id);
+  }
+  return id;
+}
+
+function getActiveProfile(){
+  const id = getActiveUserId();
+  const profiles = getProfiles();
+  return profiles.find(p => p.id === id) || profiles[0];
+}
+
+function updateProfileUI(){
+  const p = getActiveProfile();
+  const nameEl = document.getElementById('userDisplayName');
+  const avatarEl = document.getElementById('avatarText');
+  if (nameEl) nameEl.textContent = p.name;
+  if (avatarEl) avatarEl.textContent = p.name ? p.name.charAt(0).toUpperCase() : 'U';
+}
+
+function openProfileModal(){
+  const modal = document.getElementById('profileModal');
+  const input = document.getElementById('profileNameInput');
+  const cur = getActiveProfile();
+  if (input) input.value = cur.name;
+  renderProfilesList();
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeProfileModal(e){
+  if (e && e.target !== e.currentTarget) return;
+  const modal = document.getElementById('profileModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function renderProfilesList(){
+  const container = document.getElementById('profileListContainer');
+  if (!container) return;
+  const profiles = getProfiles();
+  const activeId = getActiveUserId();
+  container.innerHTML = '';
+  profiles.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'profile-item' + (p.id === activeId ? ' active' : '');
+    item.innerHTML = `
+      <div style="display:flex; align-items:center; gap:0.6rem;">
+        <span class="user-avatar" style="width:26px;height:26px;font-size:0.75rem;">${(p.name||'U').charAt(0).toUpperCase()}</span>
+        <span style="font-weight:700;font-size:0.88rem;">${esc(p.name)}</span>
+        ${p.id === activeId ? '<span class="count-pill" style="font-size:0.65rem;padding:0.1rem 0.45rem;">ACTIVE</span>' : ''}
+      </div>
+      <div>
+        ${p.id !== activeId ? `<button class="btn-switch-user" onclick="switchUser('${p.id}')">Switch</button>` : ''}
+        ${profiles.length > 1 && p.id !== activeId ? `<button class="btn-del-user" onclick="deleteUser('${p.id}')" title="Delete profile">🗑</button>` : ''}
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+async function saveProfileName(){
+  const input = document.getElementById('profileNameInput');
+  const newName = (input.value || '').trim();
+  if (!newName) return;
+  const cur = getActiveProfile();
+  cur.name = newName;
+  const profiles = getProfiles();
+  const idx = profiles.findIndex(p => p.id === cur.id);
+  if (idx !== -1) profiles[idx].name = newName;
+  localStorage.setItem('tr_profiles', JSON.stringify(profiles));
+  updateProfileUI();
+  renderProfilesList();
+  try {
+    await api('/api/user', 'POST', { name: newName });
+  } catch(e) {}
+  toast(`Profile renamed to "${newName}"`, 'success', 2000);
+}
+
+async function switchUser(id){
+  localStorage.setItem('tr_active_user', id);
+  updateProfileUI();
+  renderProfilesList();
+  closeProfileModal();
+  toast(`Switched profile! Loading tasks...`, 'info', 1800);
+  focusId = null;
+  await Promise.all([loadTasks(), loadStreak()]);
+  resetTimer();
+}
+
+function createNewProfile(){
+  const name = prompt('Enter name for the new profile:') || '';
+  if (!name.trim()) return;
+  const newId = 'user_' + Math.random().toString(36).substring(2, 9);
+  const profiles = getProfiles();
+  profiles.push({ id: newId, name: name.trim() });
+  localStorage.setItem('tr_profiles', JSON.stringify(profiles));
+  switchUser(newId);
+}
+
+function deleteUser(id){
+  if (!confirm('Are you sure you want to remove this profile?')) return;
+  let profiles = getProfiles().filter(p => p.id !== id);
+  localStorage.setItem('tr_profiles', JSON.stringify(profiles));
+  renderProfilesList();
+}
 
 /* ════════════════════════════════════════════
    THEME
@@ -767,10 +1038,16 @@ function toast(msg, type='info', ms=3000){
 }
 
 /* ════════════════════════════════════════════
-   API
+   API WITH MULTI-USER HEADER
 ════════════════════════════════════════════ */
 async function api(url, method='GET', body=null){
-  const opts = { method, headers:{'Content-Type':'application/json'} };
+  const opts = { 
+    method, 
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-Id': getActiveUserId()
+    } 
+  };
   if(body) opts.body = JSON.stringify(body);
   const r = await fetch(url, opts);
   const d = await r.json();
@@ -784,7 +1061,6 @@ async function api(url, method='GET', body=null){
 async function loadStreak(){
   try{
     const s = await api('/api/streak');
-    /* Main metric */
     document.getElementById('sCount').textContent = s.count;
     document.getElementById('sBest').textContent  = s.bestStreak;
     document.getElementById('sTotal').textContent = s.totalCompleted;
@@ -809,7 +1085,6 @@ async function loadStreak(){
       desc.textContent = `Complete any task today to ignite your streak! 🚀`;
     }
 
-    /* 7-day dots */
     const container = document.getElementById('weekDots');
     container.innerHTML = '';
     (s.recentDays||[]).forEach(d => {
@@ -891,7 +1166,6 @@ function renderTasks(){
   });
 }
 
-/* ─── CRUD ─── */
 document.getElementById('addForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const inp = document.getElementById('addInput');
@@ -925,7 +1199,7 @@ async function toggleTask(id, done){
 async function deleteTask(id){
   try{
     await api(`/api/tasks/${id}`,'DELETE');
-    if(focusId===id){ focusId=null; updateTimerTaskLabel(); }
+    if(focusId===id){ focusId=null; }
     await loadTasks();
     toast('Task deleted.','info',1800);
   }catch(e){ toast(e.message,'error'); }
@@ -940,12 +1214,11 @@ async function clearDone(){
 }
 
 /* ════════════════════════════════════════════
-   WHEEL
+   WHEEL (ZERO-OVERLAP ENGINE)
 ════════════════════════════════════════════ */
 const WC = document.getElementById('wcanvas');
 const WX = WC.getContext('2d');
 
-/* Binary-search text fit to maxPx width */
 function fitText(ctx, str, maxPx){
   if(ctx.measureText(str).width <= maxPx) return str;
   let lo=1, hi=str.length-1, out=str[0]+'…';
@@ -971,7 +1244,6 @@ function drawWheel(){
   const active = tasks.filter(t=>!t.completed);
 
   if(!active.length){
-    /* Empty state disc */
     WX.beginPath(); WX.arc(cx,cy,R,0,Math.PI*2);
     WX.fillStyle=getCSSVar('--surface2'); WX.fill();
     WX.strokeStyle=getCSSVar('--border'); WX.lineWidth=3; WX.stroke();
@@ -983,12 +1255,11 @@ function drawWheel(){
   }
 
   const arc    = (Math.PI*2)/active.length;
-  const innerR = hubR+16;   // 44
-  const outerR = R-14;      // 136
-  const midR   = (innerR+outerR)/2; // 90 — centre of text zone
-  const maxW   = (outerR-innerR)*0.82; // ~75px available width
+  const innerR = hubR+16;
+  const outerR = R-14;
+  const midR   = (innerR+outerR)/2;
+  const maxW   = (outerR-innerR)*0.82;
 
-  /* ── Slices ── */
   active.forEach((task, i)=>{
     const s = angle + i*arc, e = s+arc;
     WX.beginPath(); WX.moveTo(cx,cy);
@@ -997,7 +1268,6 @@ function drawWheel(){
     WX.strokeStyle='rgba(255,255,255,.38)'; WX.lineWidth=2; WX.stroke();
   });
 
-  /* ── Text layer (drawn after all slices so no shadow leak) ── */
   active.forEach((task, i)=>{
     const sliceAngle = angle + i*arc + arc/2;
     WX.save();
@@ -1005,7 +1275,6 @@ function drawWheel(){
     WX.rotate(sliceAngle);
     WX.translate(midR, 0);
 
-    /* Flip text so it's always upright */
     const norm = ((sliceAngle % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
     if(norm > Math.PI/2 && norm < Math.PI*1.5) WX.rotate(Math.PI);
 
@@ -1016,7 +1285,6 @@ function drawWheel(){
     WX.shadowBlur   = 4;
 
     if(active.length <= 3 && task.text.includes(' ')){
-      /* 2-line layout for wide sectors */
       WX.font = `bold 12px Inter,sans-serif`;
       const words = task.text.trim().split(/\s+/);
       const mid   = Math.ceil(words.length/2);
@@ -1032,11 +1300,9 @@ function drawWheel(){
     WX.restore();
   });
 
-  /* ── Golden bezel ── */
   WX.beginPath(); WX.arc(cx,cy,R,0,Math.PI*2);
   WX.strokeStyle='#ca8a04'; WX.lineWidth=5; WX.stroke();
 
-  /* Studs */
   WX.shadowBlur=0;
   for(let a=0;a<Math.PI*2;a+=Math.PI/12){
     WX.beginPath();
@@ -1044,7 +1310,6 @@ function drawWheel(){
     WX.fillStyle='#fef08a'; WX.fill();
   }
 
-  /* ── Hub ── */
   WX.beginPath(); WX.arc(cx,cy,hubR+3,0,Math.PI*2);
   WX.fillStyle=getCSSVar('--surface');
   WX.shadowColor='rgba(0,0,0,.3)'; WX.shadowBlur=14; WX.fill();
@@ -1055,7 +1320,6 @@ function drawWheel(){
   WX.fillStyle='#6d28d9'; WX.fill();
   WX.strokeStyle='#a78bfa'; WX.lineWidth=2; WX.stroke();
 
-  /* Hub label */
   WX.fillStyle='#fff'; WX.font='900 10px Inter,sans-serif';
   WX.textAlign='center'; WX.textBaseline='middle';
   WX.shadowColor='rgba(0,0,0,.45)'; WX.shadowBlur=3;
@@ -1063,7 +1327,6 @@ function drawWheel(){
   WX.shadowBlur=0;
 }
 
-/* ─── SPIN ─── */
 function doSpin(){
   if(spinning) return;
   const active = tasks.filter(t=>!t.completed);
@@ -1089,14 +1352,12 @@ function doSpin(){
     angle = start + (end-start)*ease(p);
     drawWheel();
 
-    /* Tick sound when crossing a segment boundary */
     const na = ((-angle - Math.PI/2) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
     const seg = Math.floor(na/arc) % active.length;
     if(seg!==lastSeg){ lastSeg=seg; playTick(); needle.classList.add('bounce'); setTimeout(()=>needle.classList.remove('bounce'),80); }
 
     if(p<1){ rafId=requestAnimationFrame(frame); return; }
 
-    /* Done */
     angle = end % (Math.PI*2);
     spinning=false;
     document.getElementById('spinBtn').disabled=false;
@@ -1106,7 +1367,6 @@ function doSpin(){
     document.getElementById('winText').textContent = winner.text;
     document.getElementById('winBanner').style.display='block';
 
-    /* Timer task label */
     const tl = document.getElementById('timerTask');
     tl.textContent = winner.text.length>22?winner.text.slice(0,20)+'…':winner.text;
     tl.style.display='';
@@ -1114,7 +1374,6 @@ function doSpin(){
     burst(); playFanfare();
     toast(`🎯 Selected: "${winner.text}"`, 'info', 4500);
 
-    /* Scroll to task */
     const row = document.getElementById(`ti-${winner.id}`);
     if(row) row.scrollIntoView({behavior:'smooth',block:'nearest'});
 
@@ -1131,7 +1390,7 @@ function startFromWinner(){
 /* ════════════════════════════════════════════
    TIMER
 ════════════════════════════════════════════ */
-const CIRC_DASH = 2*Math.PI*85; // 534.07
+const CIRC_DASH = 2*Math.PI*85;
 
 function setMins(m, btn){
   document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active'));
@@ -1199,8 +1458,6 @@ function resetTimer(){
   renderTimer();
 }
 
-function updateTimerTaskLabel(){ /* called when focused task deleted */ }
-
 /* ════════════════════════════════════════════
    UTILS
 ════════════════════════════════════════════ */
@@ -1212,6 +1469,7 @@ function esc(s){
    INIT
 ════════════════════════════════════════════ */
 (async function init(){
+  updateProfileUI();
   await Promise.all([loadTasks(), loadStreak()]);
   renderTimer();
 })();

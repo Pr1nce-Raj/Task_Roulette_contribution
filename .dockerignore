@@ -1,0 +1,13 @@
+.git
+.gitignore
+.idea
+*.iml
+.vscode
+out/
+bin/
+*.db
+*.db-journal
+tasks.json
+streak.json
+*.md
+temp*
