@@ -1,0 +1,19 @@
+# Build artifacts
+out/
+*.class
+
+# Runtime database & temporary files
+taskroulette.db
+taskroulette.db-journal
+tasks.json
+streak.json
+body.json
+task*.json
+put*.json
+
+# IDE & OS files
+.idea/
+*.iml
+.vscode/
+Thumbs.db
+[Dd]esktop.ini
