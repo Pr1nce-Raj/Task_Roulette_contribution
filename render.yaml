@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: task-roulette
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DB_PATH
+        value: /app/data/taskroulette.db
+      - key: STATIC_DIR
+        value: /app/static

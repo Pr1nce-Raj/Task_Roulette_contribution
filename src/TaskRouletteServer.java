@@ -498,6 +498,9 @@ public class TaskRouletteServer {
             byte[] data = Files.readAllBytes(f);
             cors(ex);
             ex.getResponseHeaders().set("Content-Type", mime);
+            ex.getResponseHeaders().set("Cache-Control", "no-cache, no-store, must-revalidate");
+            ex.getResponseHeaders().set("Pragma", "no-cache");
+            ex.getResponseHeaders().set("Expires", "0");
             ex.sendResponseHeaders(200, data.length);
             try (var os = ex.getResponseBody()) { os.write(data); }
         }
