@@ -1,103 +1,259 @@
-# 🎡 Task Roulette (Pro Edition)
+# 🎡 Task Roulette
 
-A gamified focus-task manager built with **Java 17 (plain `HttpServer` + SQLite JDBC)** on the backend and **vanilla HTML5 / CSS3 / JavaScript** on the frontend. No heavy frameworks or external npm/node dependencies required!
+**Can't decide what to work on? Let the wheel choose.**
+
+Task Roulette is a gamified focus-task manager. Add your tasks, spin the roulette wheel, and the app picks one for you and starts a focus timer. Complete tasks every day to build a streak.
+
+Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and JavaScript**. No frameworks, no npm, no build tools.
+
+🔗 **Live demo:** https://taskroulette1.vercel.app/
 
 ---
 
-## ✨ Features & Polish
+## 📑 Table of Contents
 
-| Feature | Details |
+- [Features](#-features)
+- [How It Works](#-how-it-works)
+- [Tech Stack](#-tech-stack)
+- [Getting Started](#-getting-started)
+- [API Reference](#-api-reference)
+- [Database](#-database)
+- [Deployment](#-deployment)
+- [Project Structure](#-project-structure)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## ✨ Features
+
+### 🎯 Core
+| Feature | Description |
 |---|---|
-| 👤 **Multi-User Isolation** | Each user/profile has their own completely isolated tasks, roulette wheel, and daily streak. Users can rename and switch profiles seamlessly. |
-| 🗄️ **True SQLite Persistence** | All tasks, timestamps, and task completion logs persist in `taskroulette.db`. Survives server restarts. |
-| 🔥 **Authentic Real Streak System** | Backed by a dedicated `completion_log` table per user. Tracks consecutive days mathematically. Displays current streak, best streak record, and an interactive **7-day activity calendar**. |
-| 🎯 **High-DPI Retina Roulette** | Crisp canvas rendering with golden rim, vibrant slices, center hub, zero-overlap text algorithm, and smooth quintic deceleration easing. |
-| 🔊 **Web Audio Sound Effects** | Realistic ticking sounds as wheel slices pass the pointer, celebratory victory fanfare on win, and pleasant timer completion chimes (with 🔊/🔇 toggle). |
-| 🎊 **Canvas Confetti Cannon** | Physics-based particle explosion when a spin lands or when a task is completed! |
-| ⏱️ **Focus Timer with Presets** | Quick preset buttons (`5 min`, `10 min`, `15 min`, `25 min`, `45 min`) plus custom minute inputs. Real-time SVG circular countdown ring that shifts color (purple → amber → red). |
-| 📋 **Task Management & Filters** | Filter tasks by `All`, `Active`, or `Completed`. "Clear completed" button. When Spin picks a task, it auto-scrolls to the task and highlights it with an "IN FOCUS" badge. |
-| 🌓 **Dark & Light Modes** | Theme toggle with persistent `localStorage` preference and glassmorphic cards. |
-| 📱 **Mobile Responsive** | Fully responsive from large monitors down to 375px mobile screens. |
-| 🐳 **Docker & Render Ready** | Includes multi-stage Dockerfile (Eclipse Temurin 17) and automatic `PORT` binding (`0.0.0.0`) for instant cloud deployment. |
+| **Roulette Wheel** | High-DPI canvas wheel with a golden rim and smooth deceleration. It picks a random task and highlights it with an "IN FOCUS" badge. |
+| **Focus Timer** | Presets (5, 10, 15, 25 and 45 min) or a custom time, with a circular countdown ring that changes color (purple, amber, red). |
+| **Task Management** | Add, complete and delete tasks. Filter by All, Active or Completed, and clear all completed tasks at once. |
+
+### 🔥 Progress
+| Feature | Description |
+|---|---|
+| **Streak System** | Tracks current streak, best streak and total completed tasks, based on real completion history. |
+| **7-Day Activity Calendar** | Shows which of the last 7 days you completed tasks. |
+| **Confetti** | Particle effect when a spin lands or a task is completed. |
+
+### 👤 Users and Data
+| Feature | Description |
+|---|---|
+| **Multi-User Profiles** | Every profile has its own tasks, wheel and streak. Profiles can be renamed. |
+| **SQLite Persistence** | All data is stored in `taskroulette.db` and survives server restarts. |
+
+### 🎨 Experience
+| Feature | Description |
+|---|---|
+| **Sound Effects** | Wheel ticking, win fanfare and timer chime, created with the Web Audio API. Mute toggle included. |
+| **Dark / Light Mode** | Theme toggle, remembered in the browser. |
+| **Responsive Design** | Works from large monitors down to 375px phone screens. |
+| **Docker Ready** | Multi-stage Dockerfile and automatic `PORT` binding for cloud deployment. |
 
 ---
 
-## 🚀 How to Run Locally
+## ⚙️ How It Works
 
-### Option A: Standard Java 17
-
-```powershell
-# 1 — Compile backend
-javac -cp "lib/sqlite-jdbc.jar" -d out src/TaskRouletteServer.java
-
-# 2 — Run server (Windows)
-java -cp "out;lib/sqlite-jdbc.jar" --enable-native-access=ALL-UNNAMED TaskRouletteServer
-
-# (On macOS / Linux use colon ':' instead of semicolon ';')
-java -cp "out:lib/sqlite-jdbc.jar" --enable-native-access=ALL-UNNAMED TaskRouletteServer
-
-# 3 — Open browser
-http://localhost:8080/
+```
+ Add tasks ──▶ Spin the wheel ──▶ Task is picked ──▶ Focus timer starts
+                                                           │
+   Streak grows ◀── Completion is logged ◀── Mark task done ◀┘
 ```
 
-### Option B: Using Docker
+1. **Add tasks.** Each task is saved to SQLite through the REST API.
+2. **Spin.** The wheel picks one active task at random and scrolls to it in the list.
+3. **Focus.** Start the timer (preset or custom). A chime plays when time is up.
+4. **Complete.** Marking a task done writes an entry to the `completion_log` table.
+5. **Streak.** The backend counts consecutive days from the completion log and returns the current streak, best streak and the last 7 days.
+
+Each request carries an `X-User-Id` header, so the backend always returns only that user's data.
+
+---
+
+## 🧰 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Backend** | Java 17, `com.sun.net.httpserver.HttpServer` |
+| **Database** | SQLite via `sqlite-jdbc` (3.36.0.3) |
+| **Frontend** | HTML5, CSS3, vanilla JavaScript (single page) |
+| **Graphics** | HTML Canvas (wheel, confetti), SVG (timer ring) |
+| **Audio** | Web Audio API |
+| **Browser storage** | `localStorage` for theme and sound preferences |
+| **Containers** | Docker (Eclipse Temurin 17, multi-stage build) |
+| **Hosting** | Render (backend), Vercel (frontend) |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Java 17 or newer**, or **Docker**
+
+### Option A: Run with Java
 
 ```bash
-# Build Docker image
+# 1. Compile
+javac -cp "lib/sqlite-jdbc.jar" -d out src/TaskRouletteServer.java
+
+# 2. Run on Windows (";" is the separator)
+java -cp "out;lib/sqlite-jdbc.jar" --enable-native-access=ALL-UNNAMED TaskRouletteServer
+
+# 2. Run on macOS / Linux (":" is the separator)
+java -cp "out:lib/sqlite-jdbc.jar" --enable-native-access=ALL-UNNAMED TaskRouletteServer
+```
+
+Then open **http://localhost:8080/**
+
+### Option B: Run with Docker
+
+```bash
 docker build -t task-roulette .
-
-# Run container
 docker run -p 8080:8080 task-roulette
+```
 
-# Open browser
-http://localhost:8080/
+Then open **http://localhost:8080/**
+
+> The server reads the port from the `PORT` environment variable (default `8080`) and binds to `0.0.0.0`.
+
+---
+
+## 📡 API Reference
+
+Base URL: `http://localhost:8080`
+
+All endpoints accept an `X-User-Id` header to separate users.
+
+### Tasks
+
+| Method | Endpoint | Body | Description |
+|---|---|---|---|
+| `GET` | `/api/tasks` | none | List all tasks of the user |
+| `POST` | `/api/tasks` | `{"text": "..."}` | Create a task (returns `201 Created`) |
+| `PUT` | `/api/tasks/{id}` | `{"completed": true}` or `{"text": "..."}` | Update a task. Completing a task also updates the streak log. |
+| `DELETE` | `/api/tasks/{id}` | none | Delete one task |
+| `DELETE` | `/api/tasks/completed` | none | Delete all completed tasks |
+
+### Streak
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/streak` | Returns `{ count, bestStreak, completedToday, active, totalCompleted, recentDays: [...] }` |
+
+### Profile
+
+| Method | Endpoint | Body | Description |
+|---|---|---|---|
+| `GET` | `/api/user` | none | Returns `{ id, name }` |
+| `POST` | `/api/user` | `{"name": "..."}` | Update the display name |
+
+**Example**
+
+```bash
+curl -X POST http://localhost:8080/api/tasks \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: demo" \
+  -d '{"text": "Study Java"}'
 ```
 
 ---
 
-## ☁️ Deployment on Render
+## 🗄️ Database
 
-1. Go to [Render Dashboard](https://dashboard.render.com/) and click **New +** $\rightarrow$ **Web Service**.
-2. Connect your GitHub repository: `dhirajkumar-09/Task_Roulette`.
-3. In service settings:
-   - **Environment**: `Docker`
-   - **Branch**: `main`
-   - **Plan**: `Free`
-4. Click **Create Web Service**.
-5. Render will automatically build the Dockerfile and launch your application!
+SQLite file: `taskroulette.db` (created automatically on first run).
 
----
-
-## 📡 REST API Reference
-
-Base URL: `http://localhost:8080` (Supports `X-User-Id` header for per-user isolation)
-
-| Method | Endpoint | Headers | Request Body | Response Description |
-|---|---|---|---|---|
-| `GET` | `/api/tasks` | `X-User-Id` | — | Array of tasks for the active user |
-| `POST` | `/api/tasks` | `X-User-Id` | `{"text":"..."}` | Creates task for active user, returns 201 Created |
-| `PUT` | `/api/tasks/{id}` | `X-User-Id` | `{"completed":true}` or `{"text":"..."}` | Updates task completion / text and automatically updates real streak log |
-| `DELETE` | `/api/tasks/{id}` | `X-User-Id` | — | Deletes task with `{success: true}` |
-| `DELETE` | `/api/tasks/completed` | `X-User-Id` | — | Clears all completed tasks for active user |
-| `GET` | `/api/streak` | `X-User-Id` | — | Returns user streak `{count, bestStreak, completedToday, active, totalCompleted, recentDays:[...]}` |
-| `GET` | `/api/user` | `X-User-Id` | — | Returns profile `{id, name}` |
-| `POST` | `/api/user` | `X-User-Id` | `{"name":"..."}` | Updates display name for profile |
+| Table | Purpose |
+|---|---|
+| `users` | User profiles (id and display name) |
+| `tasks` | Tasks with text, completion state and timestamps |
+| `completion_log` | One record for each completed task, used to calculate streaks |
 
 ---
 
-## 📁 Project Architecture
+## ☁️ Deployment
+
+The live demo runs the frontend on **Vercel** and the Java backend on **Render**.
+
+### Backend on Render (Docker)
+
+1. Open the [Render Dashboard](https://dashboard.render.com/) → **New +** → **Web Service**.
+2. Connect this GitHub repository.
+3. Set **Environment** to `Docker`, **Branch** to `main`, and pick a plan.
+4. Click **Create Web Service**. Render builds the `Dockerfile` and starts the app.
+
+The repository also includes a `render.yaml` file for Render configuration.
+
+### Frontend on Vercel
+
+1. Import the repository in [Vercel](https://vercel.com/).
+2. Set **Root Directory** to `static` and **Framework Preset** to `Other`.
+3. Make sure `/api/*` requests reach the Render backend (see `vercel.json`).
+
+> ⚠️ On Render's free plan the server sleeps after a period of inactivity (the first load can take about a minute), and the SQLite file may reset on restart because the disk is temporary.
+
+---
+
+## 📁 Project Structure
 
 ```
-c:/TASK/
+Task_Roulette/
 ├── src/
-│   └── TaskRouletteServer.java   # Java 17 backend with SQLite JDBC, multi-user, & JSON engine
+│   └── TaskRouletteServer.java   # Backend: HTTP server, SQLite access, JSON handling
 ├── static/
-│   └── index.html                # Single-page app (vanilla HTML/CSS/JS, Web Audio, Canvas)
+│   └── index.html                # Frontend: single-page app (HTML, CSS, JS)
 ├── lib/
-│   └── sqlite-jdbc.jar           # Self-contained SQLite JDBC driver (3.36.0.3)
-├── Dockerfile                    # Multi-stage Docker build for Render / container deployments
-├── .dockerignore                 # Docker build exclusions
-├── taskroulette.db               # SQLite database file (tasks + completion_log + users)
-├── README.md                     # Documentation & setup guide
-└── PROGRESS.md                   # Iteration & verification log
+│   └── sqlite-jdbc.jar           # SQLite JDBC driver
+├── Dockerfile                    # Multi-stage Docker build
+├── .dockerignore                 # Files excluded from the Docker build
+├── render.yaml                   # Render deployment configuration
+├── vercel.json                   # Vercel configuration
+├── ISSUES.md                     # Planned features and issue descriptions
+├── PROGRESS.md                   # Development log
+├── .gitignore
+└── README.md
 ```
+
+---
+
+## 🗺️ Roadmap
+
+Planned features are tracked in the [Issues](https://github.com/dhirajkumar-09/Task_Roulette/issues) tab (descriptions are also in [`ISSUES.md`](ISSUES.md)).
+
+- [ ] Task priority and tags (High, Medium, Low)
+- [ ] Weighted roulette wheel based on priority
+- [ ] Prevent duplicate task names
+- [ ] Edit task text directly in the list
+- [ ] Pomodoro cycle with short and long breaks
+- [ ] Browser notification when the focus timer ends
+- [ ] Keyboard shortcuts
+- [ ] Sound themes and a volume slider
+- [ ] Auto-sync theme with the system dark/light preference
+- [ ] Export and import tasks (JSON / CSV)
+- [ ] Productivity stats and heatmap calendar
+- [ ] Rate limiting and input sanitization
+- [ ] `docker-compose.yml` for one-command setup
+- [ ] GitHub Actions CI (build and API smoke tests)
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+1. **Fork** the repository.
+2. Pick an issue from the [Issues](https://github.com/dhirajkumar-09/Task_Roulette/issues) tab (look for `good first issue`).
+3. Create a branch: `git checkout -b feature/my-feature`
+4. Commit your changes and link the issue: `git commit -m "Add my feature, Fixes #12"`
+5. Push the branch and open a **Pull Request**.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
