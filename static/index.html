@@ -1125,7 +1125,10 @@ ul { list-style: none; }
     <div class="brand" onclick="location.reload()">
       <div class="brand-icon">🎡</div>
       <div class="brand-text">
-        <span class="brand-title">Task Roulette</span>
+        <div style="display:flex;align-items:center;">
+          <span class="brand-title">Task Roulette</span>
+          <span class="badge-tag secured" style="font-size:0.6rem; padding:0.12rem 0.45rem; margin-left:0.4rem;">LIVE PRO</span>
+        </div>
         <span class="brand-subtitle">Focus & Streak Pro</span>
       </div>
     </div>
@@ -1760,6 +1763,21 @@ async function loadStreak() {
 async function loadTasks() {
   try {
     tasks = await api('/api/tasks');
+    if (!tasks || tasks.length === 0) {
+      const defaults = [
+        "Read 10 pages 📚",
+        "Deep focus sprint ⚡",
+        "Clear inbox & messages ✉️",
+        "Quick 10m workout 💪",
+        "Review daily goals 🎯"
+      ];
+      for (const item of defaults) {
+        try {
+          await api('/api/tasks', 'POST', { text: item });
+        } catch(e) {}
+      }
+      tasks = await api('/api/tasks');
+    }
     renderTasks();
     drawWheel();
   } catch (e) {
@@ -1930,31 +1948,19 @@ function drawWheel() {
   ctx.clearRect(0, 0, SIZE, SIZE);
 
   const active = tasks.filter(t => !t.completed);
+  const displayTasks = active.length > 0 ? active : [
+    { text: "Add your task ✏️" },
+    { text: "Spin the wheel 🎡" },
+    { text: "Stay focused ⚡" },
+    { text: "Build streak 🔥" }
+  ];
 
-  // Empty State Disc
-  if (!active.length) {
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
-    ctx.fillStyle = getCssVariable('--surface-sub');
-    ctx.fill();
-    ctx.strokeStyle = getCssVariable('--border');
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    ctx.fillStyle = getCssVariable('--subtle');
-    ctx.font = '700 15px Plus Jakarta Sans, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Add tasks to spin! 🎡', cx, cy);
-    return;
-  }
-
-  const arc = (Math.PI * 2) / active.length;
+  const arc = (Math.PI * 2) / displayTasks.length;
   const textMidR = (hubR + 18 + outerR - 16) / 2;
   const maxTextPx = (outerR - hubR - 36) * 0.82;
 
   // 1. Sector Slices
-  active.forEach((task, i) => {
+  displayTasks.forEach((task, i) => {
     const s = wheelAngle + i * arc;
     const e = s + arc;
     ctx.beginPath();
@@ -1970,7 +1976,7 @@ function drawWheel() {
   });
 
   // 2. Text Labels
-  active.forEach((task, i) => {
+  displayTasks.forEach((task, i) => {
     const sliceAngle = wheelAngle + i * arc + arc / 2;
     ctx.save();
     ctx.translate(cx, cy);
@@ -1989,7 +1995,7 @@ function drawWheel() {
     ctx.shadowColor  = 'rgba(0, 0, 0, 0.55)';
     ctx.shadowBlur   = 4;
 
-    if (active.length <= 3 && task.text.includes(' ')) {
+    if (displayTasks.length <= 3 && task.text.includes(' ')) {
       ctx.font = 'bold 12px Plus Jakarta Sans, sans-serif';
       const words = task.text.trim().split(/\s+/);
       const half = Math.ceil(words.length / 2);
@@ -1998,7 +2004,7 @@ function drawWheel() {
       ctx.fillText(line1, 0, -8);
       ctx.fillText(line2, 0, 8);
     } else {
-      const fontSize = active.length > 8 ? 10 : active.length > 5 ? 11 : 13;
+      const fontSize = displayTasks.length > 8 ? 10 : displayTasks.length > 5 ? 11 : 13;
       ctx.font = `bold ${fontSize}px Plus Jakarta Sans, sans-serif`;
       ctx.fillText(fitTextWidth(ctx, task.text.trim(), maxTextPx), 0, 0);
     }
