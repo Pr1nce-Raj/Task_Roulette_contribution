@@ -1686,6 +1686,20 @@ function toast(msg, type = 'info', ms = 3200) {
 }
 
 /* ════════════════════════════════════════════
+   API BASE URL  (backend on Render)
+   - localhost dev  → same-origin Java server
+   - Vercel prod    → Render backend URL
+════════════════════════════════════════════ */
+const API_BASE = (() => {
+  if (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1') {
+    return '';  // same-origin (local Java server)
+  }
+  // ← Replace this with your actual Render backend URL after deploying
+  return 'https://task-roulette.onrender.com';
+})();
+
+/* ════════════════════════════════════════════
    API CLIENT WITH USER ISOLATION
 ════════════════════════════════════════════ */
 async function api(url, method = 'GET', body = null) {
@@ -1697,7 +1711,7 @@ async function api(url, method = 'GET', body = null) {
     }
   };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(url, opts);
+  const res = await fetch(API_BASE + url, opts);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
