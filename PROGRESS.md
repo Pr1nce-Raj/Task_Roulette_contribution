@@ -12,3 +12,4 @@
    - Added smart 2-line word wrapping for 2-4 tasks so labels are completely visible and clean.
    - Added upright text rotation flip so text is always right-side up regardless of angle.
    - Added luxury 3D golden bezel, 24 perimeter studs/rivets, interactive center hub, and ruby SVG needle pointer.
+8. Added Task Priority / Tags (High, Medium, Low) with SQLite priority column migration and colored frontend badges. PASS.

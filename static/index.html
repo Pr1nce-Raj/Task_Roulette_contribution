@@ -497,6 +497,23 @@ ul { list-style: none; }
 }
 .task-input::placeholder { color: var(--subtle); font-weight: 500; }
 
+.priority-select {
+  padding: 0.8rem 0.9rem;
+  border: 2px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-sub);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--dur);
+}
+.priority-select:focus {
+  border-color: var(--p-light);
+  box-shadow: 0 0 0 4px var(--p-glow);
+}
+
 .btn-primary {
   padding: 0.8rem 1.4rem;
   border-radius: var(--r-sm);
@@ -611,6 +628,30 @@ ul { list-style: none; }
   padding: 0.18rem 0.55rem;
   border-radius: 50px;
   box-shadow: 0 2px 8px rgba(244, 63, 94, 0.4);
+}
+.priority-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.16rem 0.5rem;
+  border-radius: 50px;
+  flex-shrink: 0;
+}
+.priority-high {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.priority-med {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.priority-low {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
 }
 
 .task-actions {
@@ -1192,6 +1233,11 @@ ul { list-style: none; }
       <form class="add-task-box" id="addTaskForm">
         <div class="add-input-row">
           <input class="task-input" id="taskInput" type="text" placeholder="Add a new task (e.g. Finish report)..." autocomplete="off" maxlength="100"/>
+          <select class="priority-select" id="taskPriority" title="Task Priority">
+            <option value="HIGH">High</option>
+            <option value="MED" selected>Med</option>
+            <option value="LOW">Low</option>
+          </select>
           <button class="btn-primary" type="submit">＋ Add</button>
         </div>
       </form>
@@ -1829,10 +1875,13 @@ function renderTasks() {
     li.className = `task-card${t.completed ? ' is-done' : ''}${isFocus ? ' in-focus' : ''}`;
     li.id = `task-row-${t.id}`;
     const dotColor = PALETTE[i % PALETTE.length];
+    const prio = (t.priority || 'MED').toUpperCase();
+    const prioClass = prio === 'HIGH' ? 'priority-high' : prio === 'LOW' ? 'priority-low' : 'priority-med';
 
     li.innerHTML = `
       <span class="task-dot" style="background:${t.completed ? 'var(--subtle)' : dotColor}"></span>
       <span class="task-title">${esc(t.text)}</span>
+      <span class="priority-badge ${prioClass}">${prio}</span>
       ${isFocus ? '<span class="focus-tag">FOCUS</span>' : ''}
       <div class="task-actions">
         ${t.completed
@@ -1847,11 +1896,14 @@ function renderTasks() {
 document.getElementById('addTaskForm').addEventListener('submit', async e => {
   e.preventDefault();
   const input = document.getElementById('taskInput');
+  const prioSelect = document.getElementById('taskPriority');
   const text = input.value.trim();
+  const priority = prioSelect ? prioSelect.value : 'MED';
   if (!text) return;
   try {
-    await api('/api/tasks', 'POST', { text });
+    await api('/api/tasks', 'POST', { text, priority });
     input.value = '';
+    if (prioSelect) prioSelect.value = 'MED';
     await loadTasks();
     toast('Task added to wheel! 🎯', 'success', 2000);
   } catch (err) {

@@ -18,9 +18,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `database`
 - **Description**: Allow users to assign priorities (`HIGH`, `MED`, `LOW`) or tags (e.g., `#study`, `#work`, `#fitness`) when adding tasks.
 - **Tasks**:
-  - [ ] Add `priority` column to SQLite `tasks` table (`ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'MED'`).
-  - [ ] Update POST & PUT endpoints to accept priority parameter.
-  - [ ] Add colored priority badges in frontend task cards.
+  - [x] Add `priority` column to SQLite `tasks` table (`ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'MED'`).
+  - [x] Update POST & PUT endpoints to accept priority parameter.
+  - [x] Add colored priority badges in frontend task cards.
 
 ---
 
