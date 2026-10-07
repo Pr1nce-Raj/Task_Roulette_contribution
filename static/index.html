@@ -497,6 +497,23 @@ ul { list-style: none; }
 }
 .task-input::placeholder { color: var(--subtle); font-weight: 500; }
 
+.priority-select {
+  padding: 0.8rem 0.9rem;
+  border: 2px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-sub);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--dur);
+}
+.priority-select:focus {
+  border-color: var(--p-light);
+  box-shadow: 0 0 0 4px var(--p-glow);
+}
+
 .btn-primary {
   padding: 0.8rem 1.4rem;
   border-radius: var(--r-sm);
@@ -611,6 +628,30 @@ ul { list-style: none; }
   padding: 0.18rem 0.55rem;
   border-radius: 50px;
   box-shadow: 0 2px 8px rgba(244, 63, 94, 0.4);
+}
+.priority-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 0.16rem 0.5rem;
+  border-radius: 50px;
+  flex-shrink: 0;
+}
+.priority-high {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.priority-med {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.priority-low {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
 }
 
 .task-actions {
@@ -1192,6 +1233,11 @@ ul { list-style: none; }
       <form class="add-task-box" id="addTaskForm">
         <div class="add-input-row">
           <input class="task-input" id="taskInput" type="text" placeholder="Add a new task (e.g. Finish report)..." autocomplete="off" maxlength="100"/>
+          <select class="priority-select" id="taskPriority" title="Task Priority">
+            <option value="HIGH">High</option>
+            <option value="MED" selected>Med</option>
+            <option value="LOW">Low</option>
+          </select>
           <button class="btn-primary" type="submit">＋ Add</button>
         </div>
       </form>
@@ -1829,10 +1875,13 @@ function renderTasks() {
     li.className = `task-card${t.completed ? ' is-done' : ''}${isFocus ? ' in-focus' : ''}`;
     li.id = `task-row-${t.id}`;
     const dotColor = PALETTE[i % PALETTE.length];
+    const prio = (t.priority || 'MED').toUpperCase();
+    const prioClass = prio === 'HIGH' ? 'priority-high' : prio === 'LOW' ? 'priority-low' : 'priority-med';
 
     li.innerHTML = `
       <span class="task-dot" style="background:${t.completed ? 'var(--subtle)' : dotColor}"></span>
       <span class="task-title">${esc(t.text)}</span>
+      <span class="priority-badge ${prioClass}">${prio}</span>
       ${isFocus ? '<span class="focus-tag">FOCUS</span>' : ''}
       <div class="task-actions">
         ${t.completed
@@ -1847,11 +1896,14 @@ function renderTasks() {
 document.getElementById('addTaskForm').addEventListener('submit', async e => {
   e.preventDefault();
   const input = document.getElementById('taskInput');
+  const prioSelect = document.getElementById('taskPriority');
   const text = input.value.trim();
+  const priority = prioSelect ? prioSelect.value : 'MED';
   if (!text) return;
   try {
-    await api('/api/tasks', 'POST', { text });
+    await api('/api/tasks', 'POST', { text, priority });
     input.value = '';
+    if (prioSelect) prioSelect.value = 'MED';
     await loadTasks();
     toast('Task added to wheel! 🎯', 'success', 2000);
   } catch (err) {
@@ -1931,6 +1983,31 @@ function getCssVariable(v) {
   return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 }
 
+const PRIORITY_WEIGHTS = {
+  HIGH: 3,
+  MED: 2,
+  LOW: 1
+};
+
+function getTaskWeight(task) {
+  const p = (task && task.priority ? task.priority : 'MED').toUpperCase();
+  return PRIORITY_WEIGHTS[p] || 2;
+}
+
+function getWheelSlices(activeTasks) {
+  const totalWeight = activeTasks.reduce((sum, t) => sum + getTaskWeight(t), 0);
+  let currentAngle = 0;
+  return activeTasks.map(task => {
+    const weight = getTaskWeight(task);
+    const arc = totalWeight > 0 ? (weight / totalWeight) * (Math.PI * 2) : (Math.PI * 2) / activeTasks.length;
+    const start = currentAngle;
+    const end = currentAngle + arc;
+    const mid = currentAngle + arc / 2;
+    currentAngle += arc;
+    return { task, weight, arc, start, end, mid };
+  });
+}
+
 function drawWheel() {
   const dpr  = window.devicePixelRatio || 1;
   const SIZE = 340;
@@ -1977,14 +2054,14 @@ function drawWheel() {
     '#06b6d4','#84cc16'
   ];
 
-  const arc        = (Math.PI * 2) / active.length;
+  const slices     = getWheelSlices(active);
   const textMidR   = (hubR + 12 + outerR - 10) / 2;
   const maxTextPx  = (outerR - hubR - 28) * 0.80;
 
   /* ── 1. Sector slices ─────────────────────── */
-  active.forEach((task, i) => {
-    const s = wheelAngle + i * arc;
-    const e = s + arc;
+  slices.forEach((slice, i) => {
+    const s = wheelAngle + slice.start;
+    const e = wheelAngle + slice.end;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, outerR, s, e);
@@ -1997,8 +2074,8 @@ function drawWheel() {
   });
 
   /* ── 2. Text labels ───────────────────────── */
-  active.forEach((task, i) => {
-    const sliceAngle = wheelAngle + i * arc + arc / 2;
+  slices.forEach((slice, i) => {
+    const sliceAngle = wheelAngle + slice.mid;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(sliceAngle);
@@ -2013,18 +2090,18 @@ function drawWheel() {
     ctx.shadowColor  = 'rgba(0,0,0,0.4)';
     ctx.shadowBlur   = 3;
 
-    if (active.length <= 3 && task.text.includes(' ')) {
+    if (active.length <= 3 && slice.task.text.includes(' ')) {
       ctx.font = 'bold 12px Plus Jakarta Sans, sans-serif';
-      const words = task.text.trim().split(/\s+/);
+      const words = slice.task.text.trim().split(/\s+/);
       const half  = Math.ceil(words.length / 2);
       const l1    = fitTextWidth(ctx, words.slice(0, half).join(' '), maxTextPx + 20);
       const l2    = fitTextWidth(ctx, words.slice(half).join(' '),    maxTextPx + 20);
       ctx.fillText(l1, 0, -8);
       ctx.fillText(l2, 0,  8);
     } else {
-      const fs = active.length > 8 ? 10 : active.length > 5 ? 11 : 13;
+      const fs = active.length > 8 || slice.arc < 0.4 ? 10 : active.length > 5 ? 11 : 13;
       ctx.font = `bold ${fs}px Plus Jakarta Sans, sans-serif`;
-      ctx.fillText(fitTextWidth(ctx, task.text.trim(), maxTextPx), 0, 0);
+      ctx.fillText(fitTextWidth(ctx, slice.task.text.trim(), maxTextPx), 0, 0);
     }
     ctx.restore();
   });
@@ -2081,10 +2158,20 @@ function spinWheel() {
   document.getElementById('spinActionBtn').disabled = true;
   document.getElementById('winnerSpotlight').style.display = 'none';
 
-  const winningIndex = Math.floor(Math.random() * active.length);
-  const arc = (Math.PI * 2) / active.length;
+  const slices = getWheelSlices(active);
+  const totalWeight = slices.reduce((sum, sl) => sum + sl.weight, 0);
+  let randWeight = Math.random() * totalWeight;
+  let winningSlice = slices[0];
+  for (let i = 0; i < slices.length; i++) {
+    if (randWeight < slices[i].weight) {
+      winningSlice = slices[i];
+      break;
+    }
+    randWeight -= slices[i].weight;
+  }
+
   const fullRotations = 7 + Math.random() * 4;
-  const targetOffset = -Math.PI / 2 - (winningIndex * arc + arc / 2) - wheelAngle + Math.PI * 2 * fullRotations;
+  const targetOffset = -Math.PI / 2 - winningSlice.mid - wheelAngle + Math.PI * 2 * fullRotations;
   const startAngle = wheelAngle;
   const endAngle = wheelAngle + targetOffset;
   const duration = 4300;
@@ -2103,7 +2190,13 @@ function spinWheel() {
 
     // Sound effect on sector pass
     const normAngle = ((-wheelAngle - Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-    const currSeg = Math.floor(normAngle / arc) % active.length;
+    let currSeg = 0;
+    for (let i = 0; i < slices.length; i++) {
+      if (normAngle >= slices[i].start && normAngle < slices[i].end) {
+        currSeg = i;
+        break;
+      }
+    }
     if (currSeg !== lastSoundSeg) {
       lastSoundSeg = currSeg;
       playTickSound();
@@ -2121,7 +2214,7 @@ function spinWheel() {
     isSpinning = false;
     document.getElementById('spinActionBtn').disabled = false;
 
-    const winner = active[winningIndex];
+    const winner = winningSlice.task;
     focusedTaskId = winner.id;
     renderTasks();
 

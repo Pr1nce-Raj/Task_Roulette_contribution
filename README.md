@@ -31,9 +31,9 @@ Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and
 ### 🎯 Core
 | Feature | Description |
 |---|---|
-| **Roulette Wheel** | High-DPI canvas wheel with a golden rim and smooth deceleration. It picks a random task and highlights it with an "IN FOCUS" badge. |
+| **Roulette Wheel** | High-DPI canvas wheel with priority-weighted sector arcs (High: 3x, Med: 2x, Low: 1x), smooth deceleration, and pointer landing. It picks a task proportional to its priority and highlights it with an "IN FOCUS" badge. |
 | **Focus Timer** | Presets (5, 10, 15, 25 and 45 min) or a custom time, with a circular countdown ring that changes color (purple, amber, red). |
-| **Task Management** | Add, complete and delete tasks. Filter by All, Active or Completed, and clear all completed tasks at once. |
+| **Task Management** | Add, complete and delete tasks with priority tags (`HIGH`, `MED`, `LOW`). Filter by All, Active or Completed, and clear all completed tasks at once. |
 
 ### 🔥 Progress
 | Feature | Description |
@@ -135,8 +135,8 @@ All endpoints accept an `X-User-Id` header to separate users.
 | Method | Endpoint | Body | Description |
 |---|---|---|---|
 | `GET` | `/api/tasks` | none | List all tasks of the user |
-| `POST` | `/api/tasks` | `{"text": "..."}` | Create a task (returns `201 Created`) |
-| `PUT` | `/api/tasks/{id}` | `{"completed": true}` or `{"text": "..."}` | Update a task. Completing a task also updates the streak log. |
+| `POST` | `/api/tasks` | `{"text": "...", "priority": "HIGH|MED|LOW"}` | Create a task (priority defaults to `MED`, returns `201 Created`) |
+| `PUT` | `/api/tasks/{id}` | `{"completed": true}`, `{"text": "..."}` or `{"priority": "..."}` | Update a task. Completing a task also updates the streak log. |
 | `DELETE` | `/api/tasks/{id}` | none | Delete one task |
 | `DELETE` | `/api/tasks/completed` | none | Delete all completed tasks |
 
@@ -159,7 +159,7 @@ All endpoints accept an `X-User-Id` header to separate users.
 curl -X POST http://localhost:8080/api/tasks \
   -H "Content-Type: application/json" \
   -H "X-User-Id: demo" \
-  -d '{"text": "Study Java"}'
+  -d '{"text": "Study Java", "priority": "HIGH"}'
 ```
 
 ---
@@ -171,7 +171,7 @@ SQLite file: `taskroulette.db` (created automatically on first run).
 | Table | Purpose |
 |---|---|
 | `users` | User profiles (id and display name) |
-| `tasks` | Tasks with text, completion state and timestamps |
+| `tasks` | Tasks with text, priority (`HIGH`, `MED`, `LOW`), completion state and timestamps |
 | `completion_log` | One record for each completed task, used to calculate streaks |
 
 ---
