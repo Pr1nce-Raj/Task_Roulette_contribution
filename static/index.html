@@ -1983,6 +1983,31 @@ function getCssVariable(v) {
   return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 }
 
+const PRIORITY_WEIGHTS = {
+  HIGH: 3,
+  MED: 2,
+  LOW: 1
+};
+
+function getTaskWeight(task) {
+  const p = (task && task.priority ? task.priority : 'MED').toUpperCase();
+  return PRIORITY_WEIGHTS[p] || 2;
+}
+
+function getWheelSlices(activeTasks) {
+  const totalWeight = activeTasks.reduce((sum, t) => sum + getTaskWeight(t), 0);
+  let currentAngle = 0;
+  return activeTasks.map(task => {
+    const weight = getTaskWeight(task);
+    const arc = totalWeight > 0 ? (weight / totalWeight) * (Math.PI * 2) : (Math.PI * 2) / activeTasks.length;
+    const start = currentAngle;
+    const end = currentAngle + arc;
+    const mid = currentAngle + arc / 2;
+    currentAngle += arc;
+    return { task, weight, arc, start, end, mid };
+  });
+}
+
 function drawWheel() {
   const dpr  = window.devicePixelRatio || 1;
   const SIZE = 340;
@@ -2029,14 +2054,14 @@ function drawWheel() {
     '#06b6d4','#84cc16'
   ];
 
-  const arc        = (Math.PI * 2) / active.length;
+  const slices     = getWheelSlices(active);
   const textMidR   = (hubR + 12 + outerR - 10) / 2;
   const maxTextPx  = (outerR - hubR - 28) * 0.80;
 
   /* ── 1. Sector slices ─────────────────────── */
-  active.forEach((task, i) => {
-    const s = wheelAngle + i * arc;
-    const e = s + arc;
+  slices.forEach((slice, i) => {
+    const s = wheelAngle + slice.start;
+    const e = wheelAngle + slice.end;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, outerR, s, e);
@@ -2049,8 +2074,8 @@ function drawWheel() {
   });
 
   /* ── 2. Text labels ───────────────────────── */
-  active.forEach((task, i) => {
-    const sliceAngle = wheelAngle + i * arc + arc / 2;
+  slices.forEach((slice, i) => {
+    const sliceAngle = wheelAngle + slice.mid;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(sliceAngle);
@@ -2065,18 +2090,18 @@ function drawWheel() {
     ctx.shadowColor  = 'rgba(0,0,0,0.4)';
     ctx.shadowBlur   = 3;
 
-    if (active.length <= 3 && task.text.includes(' ')) {
+    if (active.length <= 3 && slice.task.text.includes(' ')) {
       ctx.font = 'bold 12px Plus Jakarta Sans, sans-serif';
-      const words = task.text.trim().split(/\s+/);
+      const words = slice.task.text.trim().split(/\s+/);
       const half  = Math.ceil(words.length / 2);
       const l1    = fitTextWidth(ctx, words.slice(0, half).join(' '), maxTextPx + 20);
       const l2    = fitTextWidth(ctx, words.slice(half).join(' '),    maxTextPx + 20);
       ctx.fillText(l1, 0, -8);
       ctx.fillText(l2, 0,  8);
     } else {
-      const fs = active.length > 8 ? 10 : active.length > 5 ? 11 : 13;
+      const fs = active.length > 8 || slice.arc < 0.4 ? 10 : active.length > 5 ? 11 : 13;
       ctx.font = `bold ${fs}px Plus Jakarta Sans, sans-serif`;
-      ctx.fillText(fitTextWidth(ctx, task.text.trim(), maxTextPx), 0, 0);
+      ctx.fillText(fitTextWidth(ctx, slice.task.text.trim(), maxTextPx), 0, 0);
     }
     ctx.restore();
   });
@@ -2133,10 +2158,20 @@ function spinWheel() {
   document.getElementById('spinActionBtn').disabled = true;
   document.getElementById('winnerSpotlight').style.display = 'none';
 
-  const winningIndex = Math.floor(Math.random() * active.length);
-  const arc = (Math.PI * 2) / active.length;
+  const slices = getWheelSlices(active);
+  const totalWeight = slices.reduce((sum, sl) => sum + sl.weight, 0);
+  let randWeight = Math.random() * totalWeight;
+  let winningSlice = slices[0];
+  for (let i = 0; i < slices.length; i++) {
+    if (randWeight < slices[i].weight) {
+      winningSlice = slices[i];
+      break;
+    }
+    randWeight -= slices[i].weight;
+  }
+
   const fullRotations = 7 + Math.random() * 4;
-  const targetOffset = -Math.PI / 2 - (winningIndex * arc + arc / 2) - wheelAngle + Math.PI * 2 * fullRotations;
+  const targetOffset = -Math.PI / 2 - winningSlice.mid - wheelAngle + Math.PI * 2 * fullRotations;
   const startAngle = wheelAngle;
   const endAngle = wheelAngle + targetOffset;
   const duration = 4300;
@@ -2155,7 +2190,13 @@ function spinWheel() {
 
     // Sound effect on sector pass
     const normAngle = ((-wheelAngle - Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-    const currSeg = Math.floor(normAngle / arc) % active.length;
+    let currSeg = 0;
+    for (let i = 0; i < slices.length; i++) {
+      if (normAngle >= slices[i].start && normAngle < slices[i].end) {
+        currSeg = i;
+        break;
+      }
+    }
     if (currSeg !== lastSoundSeg) {
       lastSoundSeg = currSeg;
       playTickSound();
@@ -2173,7 +2214,7 @@ function spinWheel() {
     isSpinning = false;
     document.getElementById('spinActionBtn').disabled = false;
 
-    const winner = active[winningIndex];
+    const winner = winningSlice.task;
     focusedTaskId = winner.id;
     renderTasks();
 

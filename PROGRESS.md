@@ -13,3 +13,4 @@
    - Added upright text rotation flip so text is always right-side up regardless of angle.
    - Added luxury 3D golden bezel, 24 perimeter studs/rivets, interactive center hub, and ruby SVG needle pointer.
 8. Added Task Priority / Tags (High, Medium, Low) with SQLite priority column migration and colored frontend badges. PASS.
+9. Implemented Weighted Roulette Wheel based on task priority (High: 3x, Med: 2x, Low: 1x dynamic arcs, physics, and probability landing). PASS.
