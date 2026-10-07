@@ -31,9 +31,9 @@ Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and
 ### 🎯 Core
 | Feature | Description |
 |---|---|
-| **Weighted Roulette Wheel** | High-DPI canvas wheel with luxury bezel, smooth deceleration, and priority-weighted sectors (High: 3x, Med: 2x, Low: 1x). Picks winner directly under ruby pointer and marks it "IN FOCUS". |
+| **Roulette Wheel** | High-DPI canvas wheel with a golden rim and smooth deceleration. It picks a random task and highlights it with an "IN FOCUS" badge. |
 | **Focus Timer** | Presets (5, 10, 15, 25 and 45 min) or a custom time, with a circular countdown ring that changes color (purple, amber, red). |
-| **Task Management & Priorities** | Add, complete, and delete tasks. Choose task priority (`HIGH`, `MED`, `LOW`) with colored badges. Filter by All, Active, or Completed, and clear completed tasks. |
+| **Task Management** | Add, complete and delete tasks. Filter by All, Active or Completed, and clear all completed tasks at once. |
 
 ### 🔥 Progress
 | Feature | Description |
@@ -51,7 +51,7 @@ Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and
 ### 🎨 Experience
 | Feature | Description |
 |---|---|
-| **Sound Effects & Volume Slider** | Wheel ticking, win fanfare and timer chime with Web Audio API. Includes interactive 0%–100% volume slider and mute toggle. |
+| **Sound Effects** | Wheel ticking, win fanfare and timer chime, created with the Web Audio API. Mute toggle included. |
 | **Dark / Light Mode** | Theme toggle, remembered in the browser. |
 | **Responsive Design** | Works from large monitors down to 375px phone screens. |
 | **Docker Ready** | Multi-stage Dockerfile and automatic `PORT` binding for cloud deployment. |
@@ -134,9 +134,9 @@ All endpoints accept an `X-User-Id` header to separate users.
 
 | Method | Endpoint | Body | Description |
 |---|---|---|---|
-| `GET` | `/api/tasks` | none | List all tasks of the user (includes `priority`) |
-| `POST` | `/api/tasks` | `{"text": "...", "priority": "HIGH"}` | Create a task with priority (`HIGH`, `MED`, `LOW`, default `MED`). Returns `201 Created`. |
-| `PUT` | `/api/tasks/{id}` | `{"completed": true}`, `{"text": "..."}`, or `{"priority": "HIGH"}` | Update a task text, completion state, or priority. Completing a task also updates streak log. |
+| `GET` | `/api/tasks` | none | List all tasks of the user |
+| `POST` | `/api/tasks` | `{"text": "..."}` | Create a task (returns `201 Created`) |
+| `PUT` | `/api/tasks/{id}` | `{"completed": true}` or `{"text": "..."}` | Update a task. Completing a task also updates the streak log. |
 | `DELETE` | `/api/tasks/{id}` | none | Delete one task |
 | `DELETE` | `/api/tasks/completed` | none | Delete all completed tasks |
 
@@ -159,7 +159,7 @@ All endpoints accept an `X-User-Id` header to separate users.
 curl -X POST http://localhost:8080/api/tasks \
   -H "Content-Type: application/json" \
   -H "X-User-Id: demo" \
-  -d '{"text": "Study Java", "priority": "HIGH"}'
+  -d '{"text": "Study Java"}'
 ```
 
 ---
@@ -171,7 +171,7 @@ SQLite file: `taskroulette.db` (created automatically on first run).
 | Table | Purpose |
 |---|---|
 | `users` | User profiles (id and display name) |
-| `tasks` | Tasks with text, completion state, priority (`HIGH`/`MED`/`LOW`), and timestamps |
+| `tasks` | Tasks with text, completion state and timestamps |
 | `completion_log` | One record for each completed task, used to calculate streaks |
 
 ---

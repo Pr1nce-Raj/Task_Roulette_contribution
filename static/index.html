@@ -233,34 +233,6 @@ ul { list-style: none; }
   background: var(--surface-hover);
   transform: translateY(-1.5px);
 }
-.volume-box {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: var(--surface-sub);
-  border: 1.5px solid var(--border);
-  border-radius: 50px;
-  padding: 0 0.65rem 0 0;
-  transition: all var(--dur);
-}
-.volume-box:hover, .volume-box:focus-within {
-  border-color: var(--p-light);
-  background: var(--surface-hover);
-}
-.volume-box .icon-btn {
-  border: none;
-  background: transparent;
-  width: 34px;
-  height: 34px;
-}
-.volume-slider {
-  width: 65px;
-  height: 6px;
-  accent-color: var(--p-light);
-  cursor: pointer;
-  outline: none;
-  border-radius: 3px;
-}
 
 /* ═══════════════════════════════════════════
    STREAK & ACTIVITY HERO
@@ -524,26 +496,6 @@ ul { list-style: none; }
   box-shadow: 0 0 0 4px var(--p-glow);
 }
 .task-input::placeholder { color: var(--subtle); font-weight: 500; }
-.priority-select {
-  padding: 0.8rem 0.75rem;
-  border: 2px solid var(--border);
-  border-radius: var(--r-sm);
-  background: var(--surface-sub);
-  color: var(--text);
-  font-size: 0.88rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--dur);
-}
-.priority-select:focus {
-  border-color: var(--p-light);
-  background: var(--surface-solid);
-  box-shadow: 0 0 0 4px var(--p-glow);
-}
-.priority-select option {
-  background: var(--surface-solid);
-  color: var(--text);
-}
 
 .btn-primary {
   padding: 0.8rem 1.4rem;
@@ -659,30 +611,6 @@ ul { list-style: none; }
   padding: 0.18rem 0.55rem;
   border-radius: 50px;
   box-shadow: 0 2px 8px rgba(244, 63, 94, 0.4);
-}
-.priority-badge {
-  font-size: 0.65rem;
-  font-weight: 800;
-  padding: 0.18rem 0.55rem;
-  border-radius: 50px;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
-.priority-badge.priority-high {
-  background: var(--red-bg);
-  color: var(--red);
-  border: 1px solid rgba(239, 68, 68, 0.45);
-}
-.priority-badge.priority-med {
-  background: var(--amber-bg);
-  color: var(--amber);
-  border: 1px solid rgba(245, 158, 11, 0.45);
-}
-.priority-badge.priority-low {
-  background: var(--green-bg);
-  color: var(--green);
-  border: 1px solid rgba(16, 185, 129, 0.45);
 }
 
 .task-actions {
@@ -1213,11 +1141,8 @@ ul { list-style: none; }
         <span class="profile-caret">▾</span>
       </button>
 
-      <!-- Sound & Volume Slider & Theme Toggles -->
-      <div class="volume-box" title="Sound Volume">
-        <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Sound Effects">🔊</button>
-        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="0.7" oninput="setVolume(this.value)" title="Volume Slider" aria-label="Audio Volume Slider"/>
-      </div>
+      <!-- Sound & Theme Toggles -->
+      <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Sound Effects">🔊</button>
       <button class="icon-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
     </div>
   </div>
@@ -1267,11 +1192,6 @@ ul { list-style: none; }
       <form class="add-task-box" id="addTaskForm">
         <div class="add-input-row">
           <input class="task-input" id="taskInput" type="text" placeholder="Add a new task (e.g. Finish report)..." autocomplete="off" maxlength="100"/>
-          <select class="priority-select" id="taskPriority" title="Task Priority">
-            <option value="MED" selected>MED</option>
-            <option value="HIGH">HIGH</option>
-            <option value="LOW">LOW</option>
-          </select>
           <button class="btn-primary" type="submit">＋ Add</button>
         </div>
       </form>
@@ -1451,11 +1371,8 @@ let wheelAngle   = 0;
 let isSpinning   = false;
 let animFrameId  = null;
 let lastSoundSeg = -1;
-let soundEnabled = localStorage.getItem('tr_sound_enabled') !== 'false';
-let soundVolume  = parseFloat(localStorage.getItem('tr_sound_volume') ?? '0.7');
-if (isNaN(soundVolume) || soundVolume < 0 || soundVolume > 1) soundVolume = 0.7;
+let soundEnabled = true;
 let webAudioCtx  = null;
-let masterGainNode = null;
 let timerSeconds = 600;
 let timerTotalSec= 600;
 let timerInterval= null;
@@ -1631,53 +1548,14 @@ function toggleTheme() {
    WEB AUDIO SOUND ENGINE
 ════════════════════════════════════════════ */
 function initWebAudio() {
-  if (!webAudioCtx) {
-    webAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGainNode = webAudioCtx.createGain();
-    masterGainNode.gain.setValueAtTime(soundEnabled ? soundVolume : 0, webAudioCtx.currentTime);
-    masterGainNode.connect(webAudioCtx.destination);
-  }
+  if (!webAudioCtx) webAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (webAudioCtx.state === 'suspended') webAudioCtx.resume();
-}
-
-function setVolume(val) {
-  soundVolume = Math.max(0, Math.min(1, parseFloat(val)));
-  localStorage.setItem('tr_sound_volume', soundVolume.toString());
-  const soundBtn = document.getElementById('soundBtn');
-  if (soundVolume === 0) {
-    soundEnabled = false;
-    if (soundBtn) soundBtn.textContent = '🔇';
-  } else if (!soundEnabled) {
-    soundEnabled = true;
-    if (soundBtn) soundBtn.textContent = '🔊';
-  }
-  localStorage.setItem('tr_sound_enabled', soundEnabled.toString());
-  initWebAudio();
-  if (masterGainNode) {
-    masterGainNode.gain.setValueAtTime(soundEnabled ? soundVolume : 0, webAudioCtx.currentTime);
-  }
 }
 
 function toggleSound() {
   soundEnabled = !soundEnabled;
-  localStorage.setItem('tr_sound_enabled', soundEnabled.toString());
-  const soundBtn = document.getElementById('soundBtn');
-  const slider = document.getElementById('volumeSlider');
-  if (soundEnabled) {
-    if (soundVolume === 0) {
-      soundVolume = 0.7;
-      if (slider) slider.value = '0.7';
-      localStorage.setItem('tr_sound_volume', '0.7');
-    }
-    if (soundBtn) soundBtn.textContent = '🔊';
-    initWebAudio();
-    if (masterGainNode) masterGainNode.gain.setValueAtTime(soundVolume, webAudioCtx.currentTime);
-    toast(`Sound effects Enabled (${Math.round(soundVolume * 100)}%)`, 'info', 1500);
-  } else {
-    if (soundBtn) soundBtn.textContent = '🔇';
-    if (masterGainNode) masterGainNode.gain.setValueAtTime(0, webAudioCtx.currentTime);
-    toast('Sound effects Muted', 'info', 1500);
-  }
+  document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+  toast(`Sound effects ${soundEnabled ? 'Enabled' : 'Muted'}`, 'info', 1500);
 }
 
 function playTickSound() {
@@ -1690,7 +1568,7 @@ function playTickSound() {
   gain.gain.setValueAtTime(0.14, webAudioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, webAudioCtx.currentTime + 0.04);
   osc.connect(gain);
-  gain.connect(masterGainNode || webAudioCtx.destination);
+  gain.connect(webAudioCtx.destination);
   osc.start();
   osc.stop(webAudioCtx.currentTime + 0.04);
 }
@@ -1707,7 +1585,7 @@ function playWinFanfare() {
     gain.gain.setValueAtTime(0.25, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
     osc.connect(gain);
-    gain.connect(masterGainNode || webAudioCtx.destination);
+    gain.connect(webAudioCtx.destination);
     osc.start(t);
     osc.stop(t + 0.4);
   });
@@ -1725,7 +1603,7 @@ function playChimeBell() {
     gain.gain.setValueAtTime(0.3, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.85);
     osc.connect(gain);
-    gain.connect(masterGainNode || webAudioCtx.destination);
+    gain.connect(webAudioCtx.destination);
     osc.start(t);
     osc.stop(t + 0.85);
   });
@@ -1951,13 +1829,10 @@ function renderTasks() {
     li.className = `task-card${t.completed ? ' is-done' : ''}${isFocus ? ' in-focus' : ''}`;
     li.id = `task-row-${t.id}`;
     const dotColor = PALETTE[i % PALETTE.length];
-    const prio = (t.priority || 'MED').toUpperCase();
-    const prioClass = prio === 'HIGH' ? 'priority-high' : prio === 'LOW' ? 'priority-low' : 'priority-med';
 
     li.innerHTML = `
       <span class="task-dot" style="background:${t.completed ? 'var(--subtle)' : dotColor}"></span>
       <span class="task-title">${esc(t.text)}</span>
-      <span class="priority-badge ${prioClass}">${prio}</span>
       ${isFocus ? '<span class="focus-tag">FOCUS</span>' : ''}
       <div class="task-actions">
         ${t.completed
@@ -1972,14 +1847,11 @@ function renderTasks() {
 document.getElementById('addTaskForm').addEventListener('submit', async e => {
   e.preventDefault();
   const input = document.getElementById('taskInput');
-  const priorityEl = document.getElementById('taskPriority');
   const text = input.value.trim();
-  const priority = priorityEl ? priorityEl.value : 'MED';
   if (!text) return;
   try {
-    await api('/api/tasks', 'POST', { text, priority });
+    await api('/api/tasks', 'POST', { text });
     input.value = '';
-    if (priorityEl) priorityEl.value = 'MED';
     await loadTasks();
     toast('Task added to wheel! 🎯', 'success', 2000);
   } catch (err) {
@@ -2059,38 +1931,6 @@ function getCssVariable(v) {
   return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 }
 
-const PRIORITY_WEIGHTS = {
-  HIGH: 3,
-  MED: 2,
-  LOW: 1
-};
-
-function getTaskWeight(task) {
-  const p = (task && task.priority ? task.priority : 'MED').toUpperCase();
-  return PRIORITY_WEIGHTS[p] || 2;
-}
-
-function getWheelSlices(activeTasks) {
-  if (!activeTasks.length) return [];
-  const totalWeight = activeTasks.reduce((sum, t) => sum + getTaskWeight(t), 0);
-  let curAngle = 0;
-  return activeTasks.map((task, i) => {
-    const weight = getTaskWeight(task);
-    const arc = (Math.PI * 2 * weight) / totalWeight;
-    const slice = {
-      task,
-      index: i,
-      weight,
-      arc,
-      start: curAngle,
-      end: curAngle + arc,
-      mid: curAngle + arc / 2
-    };
-    curAngle += arc;
-    return slice;
-  });
-}
-
 function drawWheel() {
   const dpr  = window.devicePixelRatio || 1;
   const SIZE = 340;
@@ -2137,14 +1977,14 @@ function drawWheel() {
     '#06b6d4','#84cc16'
   ];
 
-  const slices     = getWheelSlices(active);
+  const arc        = (Math.PI * 2) / active.length;
   const textMidR   = (hubR + 12 + outerR - 10) / 2;
   const maxTextPx  = (outerR - hubR - 28) * 0.80;
 
   /* ── 1. Sector slices ─────────────────────── */
-  slices.forEach((slice, i) => {
-    const s = wheelAngle + slice.start;
-    const e = wheelAngle + slice.end;
+  active.forEach((task, i) => {
+    const s = wheelAngle + i * arc;
+    const e = s + arc;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, outerR, s, e);
@@ -2157,8 +1997,8 @@ function drawWheel() {
   });
 
   /* ── 2. Text labels ───────────────────────── */
-  slices.forEach((slice, i) => {
-    const sliceAngle = wheelAngle + slice.mid;
+  active.forEach((task, i) => {
+    const sliceAngle = wheelAngle + i * arc + arc / 2;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(sliceAngle);
@@ -2173,20 +2013,18 @@ function drawWheel() {
     ctx.shadowColor  = 'rgba(0,0,0,0.4)';
     ctx.shadowBlur   = 3;
 
-    const arcRatio = slice.arc / (Math.PI * 2);
-    const taskText = slice.task.text.trim();
-    if (arcRatio >= 0.22 && taskText.includes(' ')) {
+    if (active.length <= 3 && task.text.includes(' ')) {
       ctx.font = 'bold 12px Plus Jakarta Sans, sans-serif';
-      const words = taskText.split(/\s+/);
+      const words = task.text.trim().split(/\s+/);
       const half  = Math.ceil(words.length / 2);
       const l1    = fitTextWidth(ctx, words.slice(0, half).join(' '), maxTextPx + 20);
       const l2    = fitTextWidth(ctx, words.slice(half).join(' '),    maxTextPx + 20);
       ctx.fillText(l1, 0, -8);
       ctx.fillText(l2, 0,  8);
     } else {
-      const fs = arcRatio < 0.1 ? 10 : arcRatio < 0.16 ? 11 : 13;
+      const fs = active.length > 8 ? 10 : active.length > 5 ? 11 : 13;
       ctx.font = `bold ${fs}px Plus Jakarta Sans, sans-serif`;
-      ctx.fillText(fitTextWidth(ctx, taskText, maxTextPx), 0, 0);
+      ctx.fillText(fitTextWidth(ctx, task.text.trim(), maxTextPx), 0, 0);
     }
     ctx.restore();
   });
@@ -2243,31 +2081,10 @@ function spinWheel() {
   document.getElementById('spinActionBtn').disabled = true;
   document.getElementById('winnerSpotlight').style.display = 'none';
 
-  const slices = getWheelSlices(active);
-  const totalWeight = active.reduce((sum, t) => sum + getTaskWeight(t), 0);
-
-  // Pick winning slice based on priority weights (HIGH: 3, MED: 2, LOW: 1)
-  let randWeight = Math.random() * totalWeight;
-  let winningSlice = slices[0];
-  for (const s of slices) {
-    if (randWeight < s.weight) {
-      winningSlice = s;
-      break;
-    }
-    randWeight -= s.weight;
-  }
-
-  // Target lands inside winning slice (within 15% - 85% range of slice arc)
-  const slicePadding = winningSlice.arc * 0.15;
-  const targetSectorAngle = winningSlice.start + slicePadding + Math.random() * (winningSlice.arc - 2 * slicePadding);
-
-  // Pointer needle is at top (-PI / 2)
+  const winningIndex = Math.floor(Math.random() * active.length);
+  const arc = (Math.PI * 2) / active.length;
   const fullRotations = 7 + Math.random() * 4;
-  let targetOffset = -Math.PI / 2 - targetSectorAngle - wheelAngle + Math.PI * 2 * fullRotations;
-  while (targetOffset < Math.PI * 2 * 6) {
-    targetOffset += Math.PI * 2;
-  }
-
+  const targetOffset = -Math.PI / 2 - (winningIndex * arc + arc / 2) - wheelAngle + Math.PI * 2 * fullRotations;
   const startAngle = wheelAngle;
   const endAngle = wheelAngle + targetOffset;
   const duration = 4300;
@@ -2286,13 +2103,7 @@ function spinWheel() {
 
     // Sound effect on sector pass
     const normAngle = ((-wheelAngle - Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-    let currSeg = 0;
-    for (let i = 0; i < slices.length; i++) {
-      if (normAngle >= slices[i].start && normAngle < slices[i].end) {
-        currSeg = i;
-        break;
-      }
-    }
+    const currSeg = Math.floor(normAngle / arc) % active.length;
     if (currSeg !== lastSoundSeg) {
       lastSoundSeg = currSeg;
       playTickSound();
@@ -2310,17 +2121,7 @@ function spinWheel() {
     isSpinning = false;
     document.getElementById('spinActionBtn').disabled = false;
 
-    // Detect task directly under pointer (-PI / 2)
-    const finalNormAngle = ((-wheelAngle - Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-    let landedSlice = slices[0];
-    for (let i = 0; i < slices.length; i++) {
-      if (finalNormAngle >= slices[i].start && finalNormAngle < slices[i].end) {
-        landedSlice = slices[i];
-        break;
-      }
-    }
-
-    const winner = landedSlice.task;
+    const winner = active[winningIndex];
     focusedTaskId = winner.id;
     renderTasks();
 
@@ -2446,10 +2247,6 @@ function esc(str) {
    INITIALIZATION
 ════════════════════════════════════════════ */
 (async function initialize() {
-  const vSlider = document.getElementById('volumeSlider');
-  if (vSlider) vSlider.value = soundVolume.toString();
-  const sBtn = document.getElementById('soundBtn');
-  if (sBtn) sBtn.textContent = soundEnabled ? '🔊' : '🔇';
   refreshProfileUI();
   await Promise.all([loadTasks(), loadStreak()]);
   renderTimerUI();
