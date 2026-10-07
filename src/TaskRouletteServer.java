@@ -55,8 +55,7 @@ public class TaskRouletteServer {
                   text        TEXT    NOT NULL,
                   completed   INTEGER NOT NULL DEFAULT 0,
                   created_at  TEXT    NOT NULL DEFAULT (datetime('now','localtime')),
-                  completed_at TEXT,
-                  priority    TEXT    NOT NULL DEFAULT 'MED'
+                  completed_at TEXT
                 )""");
 
             try {
@@ -65,10 +64,6 @@ public class TaskRouletteServer {
 
             try {
                 s.execute("ALTER TABLE tasks ADD COLUMN completed_at TEXT");
-            } catch (SQLException ignored) {}
-
-            try {
-                s.execute("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'MED'");
             } catch (SQLException ignored) {}
 
             // Completion log table with user_id
@@ -160,18 +155,9 @@ public class TaskRouletteServer {
                                  .replace("\n", "\\n").replace("\r", "\\r");
     }
 
-    static String normalizePriority(String p) {
-        if (p == null) return "MED";
-        String up = p.trim().toUpperCase();
-        if ("HIGH".equals(up) || "MED".equals(up) || "LOW".equals(up)) {
-            return up;
-        }
-        return "MED";
-    }
-
-    static String taskJson(int id, String text, boolean done, String createdAt, String priority) {
+    static String taskJson(int id, String text, boolean done, String createdAt) {
         return "{\"id\":" + id + ",\"text\":\"" + esc(text) + "\",\"completed\":" + done
-                + ",\"createdAt\":\"" + esc(createdAt) + "\",\"priority\":\"" + esc(normalizePriority(priority)) + "\"}";
+                + ",\"createdAt\":\"" + esc(createdAt) + "\"}";
     }
 
     // ── /api/tasks ─────────────────────────────────────────────────────────────
@@ -213,11 +199,11 @@ public class TaskRouletteServer {
         void getAll(HttpExchange ex, String userId) throws Exception {
             var rows = new ArrayList<String>();
             try (var c = conn();
-                 var ps = c.prepareStatement("SELECT id, text, completed, created_at, priority FROM tasks WHERE user_id=? ORDER BY completed ASC, id DESC")) {
+                 var ps = c.prepareStatement("SELECT id, text, completed, created_at FROM tasks WHERE user_id=? ORDER BY completed ASC, id DESC")) {
                 ps.setString(1, userId);
                 try (var rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        rows.add(taskJson(rs.getInt(1), rs.getString(2), rs.getInt(3) == 1, rs.getString(4), rs.getString(5)));
+                        rows.add(taskJson(rs.getInt(1), rs.getString(2), rs.getInt(3) == 1, rs.getString(4)));
                     }
                 }
             }
@@ -226,12 +212,12 @@ public class TaskRouletteServer {
 
         void getOne(HttpExchange ex, int id, String userId) throws Exception {
             try (var c = conn();
-                 var ps = c.prepareStatement("SELECT id, text, completed, created_at, priority FROM tasks WHERE id=? AND user_id=?")) {
+                 var ps = c.prepareStatement("SELECT id, text, completed, created_at FROM tasks WHERE id=? AND user_id=?")) {
                 ps.setInt(1, id);
                 ps.setString(2, userId);
                 var rs = ps.executeQuery();
                 if (!rs.next()) { err(ex, 404, "Task not found"); return; }
-                json(ex, 200, taskJson(rs.getInt(1), rs.getString(2), rs.getInt(3) == 1, rs.getString(4), rs.getString(5)));
+                json(ex, 200, taskJson(rs.getInt(1), rs.getString(2), rs.getInt(3) == 1, rs.getString(4)));
             }
         }
 
@@ -240,17 +226,15 @@ public class TaskRouletteServer {
             String text = strField(b, "text");
             if (text == null || text.isBlank()) { err(ex, 400, "text is required"); return; }
             text = text.strip();
-            String priority = normalizePriority(strField(b, "priority"));
             try (var c = conn();
                  var ps = c.prepareStatement(
-                     "INSERT INTO tasks(user_id, text, priority) VALUES(?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+                     "INSERT INTO tasks(user_id, text) VALUES(?, ?)", Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, userId);
                 ps.setString(2, text);
-                ps.setString(3, priority);
                 ps.executeUpdate();
                 var keys = ps.getGeneratedKeys();
                 int newId = keys.next() ? keys.getInt(1) : -1;
-                json(ex, 201, taskJson(newId, text, false, LocalDate.now().toString(), priority));
+                json(ex, 201, taskJson(newId, text, false, LocalDate.now().toString()));
             }
         }
 
@@ -258,7 +242,6 @@ public class TaskRouletteServer {
             String b = body(ex);
             String newText = strField(b, "text");
             Boolean completed = boolField(b, "completed");
-            String rawPriority = strField(b, "priority");
 
             try (var c = conn()) {
                 String existingText = "";
@@ -276,16 +259,6 @@ public class TaskRouletteServer {
                     existingText = newText.strip();
                     try (var ps = c.prepareStatement("UPDATE tasks SET text=? WHERE id=? AND user_id=?")) {
                         ps.setString(1, existingText);
-                        ps.setInt(2, id);
-                        ps.setString(3, userId);
-                        ps.executeUpdate();
-                    }
-                }
-
-                if (rawPriority != null) {
-                    String prio = normalizePriority(rawPriority);
-                    try (var ps = c.prepareStatement("UPDATE tasks SET priority=? WHERE id=? AND user_id=?")) {
-                        ps.setString(1, prio);
                         ps.setInt(2, id);
                         ps.setString(3, userId);
                         ps.executeUpdate();
@@ -322,12 +295,12 @@ public class TaskRouletteServer {
                     }
                 }
 
-                try (var ps = c.prepareStatement("SELECT id, text, completed, created_at, priority FROM tasks WHERE id=? AND user_id=?")) {
+                try (var ps = c.prepareStatement("SELECT id, text, completed, created_at FROM tasks WHERE id=? AND user_id=?")) {
                     ps.setInt(1, id);
                     ps.setString(2, userId);
                     var rs = ps.executeQuery();
                     if (rs.next()) {
-                        json(ex, 200, taskJson(rs.getInt(1), rs.getString(2), rs.getInt(3) == 1, rs.getString(4), rs.getString(5)));
+                        json(ex, 200, taskJson(rs.getInt(1), rs.getString(2), rs.getInt(3) == 1, rs.getString(4)));
                     }
                 }
             }
