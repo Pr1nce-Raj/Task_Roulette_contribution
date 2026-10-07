@@ -8,9 +8,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `ui/ux`
 - **Description**: Currently, sound can only be toggled ON or OFF (🔊/🔇). Add a volume range slider (0% to 100%) in the header settings modal so users can adjust ticking and chime volume levels without muting completely.
 - **Tasks**:
-  - [ ] Add `<input type="range" min="0" max="1" step="0.05">` in header.
-  - [ ] Connect slider value to Web Audio API `gainNode.gain.value`.
-  - [ ] Persist user volume preference in `localStorage`.
+  - [x] Add `<input type="range" min="0" max="1" step="0.05">` in header.
+  - [x] Connect slider value to Web Audio API `gainNode.gain.value`.
+  - [x] Persist user volume preference in `localStorage`.
 
 ---
 
@@ -18,9 +18,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `database`
 - **Description**: Allow users to assign priorities (`HIGH`, `MED`, `LOW`) or tags (e.g., `#study`, `#work`, `#fitness`) when adding tasks.
 - **Tasks**:
-  - [ ] Add `priority` column to SQLite `tasks` table (`ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'MED'`).
-  - [ ] Update POST & PUT endpoints to accept priority parameter.
-  - [ ] Add colored priority badges in frontend task cards.
+  - [x] Add `priority` column to SQLite `tasks` table (`ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'MED'`).
+  - [x] Update POST & PUT endpoints to accept priority parameter.
+  - [x] Add colored priority badges in frontend task cards.
 
 ---
 
@@ -28,9 +28,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `algorithm`
 - **Description**: Make high-priority tasks have wider wheel sectors (higher probability of being picked) on the roulette wheel.
 - **Tasks**:
-  - [ ] Calculate sector arc dynamically based on task priority weights (High: 3x, Med: 2x, Low: 1x).
-  - [ ] Update `drawWheel()` slice angles according to weight distribution.
-  - [ ] Adjust winning sector calculation logic to match weighted probability.
+  - [x] Calculate sector arc dynamically based on task priority weights (High: 3x, Med: 2x, Low: 1x).
+  - [x] Update `drawWheel()` slice angles according to weight distribution.
+  - [x] Adjust winning sector calculation logic to match weighted probability.
 
 ---
 
