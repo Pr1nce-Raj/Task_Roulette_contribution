@@ -8,9 +8,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `ui/ux`
 - **Description**: Currently, sound can only be toggled ON or OFF (🔊/🔇). Add a volume range slider (0% to 100%) in the header settings modal so users can adjust ticking and chime volume levels without muting completely.
 - **Tasks**:
-  - [ ] Add `<input type="range" min="0" max="1" step="0.05">` in header.
-  - [ ] Connect slider value to Web Audio API `gainNode.gain.value`.
-  - [ ] Persist user volume preference in `localStorage`.
+  - [x] Add `<input type="range" min="0" max="1" step="0.05">` in header.
+  - [x] Connect slider value to Web Audio API `gainNode.gain.value`.
+  - [x] Persist user volume preference in `localStorage`.
 
 ---
 

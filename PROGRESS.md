@@ -15,3 +15,8 @@
 8. Added Task Priority / Tags (High, Medium, Low) with SQLite priority column migration and colored frontend badges. PASS.
 9. Implemented Weighted Roulette Wheel based on task priority (High: 3x, Med: 2x, Low: 1x dynamic arcs, physics, and probability landing). PASS.
 10. Added Export & Import Tasks (JSON & CSV Backup) with GET /api/export, POST /api/import, validation, duplicate prevention, and dedicated UI modal. PASS.
+11. Implemented Audio Volume Slider (Issue 1):
+   - Added interactive range slider (0% to 100%, step 0.05) in header with luxury pill container.
+   - Connected volume slider to Web Audio API Master GainNode (`masterGainNode.gain.value`).
+   - Persisted user volume preference across sessions in `localStorage` (`tr_sound_volume`). PASS.
+
