@@ -138,9 +138,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `security`, `backend`
 - **Description**: Protect endpoints against rapid spamming and sanitize text inputs against XSS and SQL injection.
 - **Tasks**:
-  - [ ] Enforce max character limit (150 chars) on task text in Java backend.
-  - [ ] Add in-memory sliding window rate limiter in `TaskRouletteServer`.
-  - [ ] Validate and escape HTML tags properly on server responses.
+  - [x] Enforce max character limit (150 chars) on task text in Java backend.
+  - [x] Add in-memory sliding window rate limiter in `TaskRouletteServer`.
+  - [x] Validate and escape HTML tags properly on server responses.
 
 ---
 

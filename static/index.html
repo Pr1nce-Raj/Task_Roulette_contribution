@@ -1235,7 +1235,7 @@ ul { list-style: none; }
       <!-- Quick Add Form -->
       <form class="add-task-box" id="addTaskForm">
         <div class="add-input-row">
-          <input class="task-input" id="taskInput" type="text" placeholder="Add a new task (e.g. Finish report)..." autocomplete="off" maxlength="100"/>
+          <input class="task-input" id="taskInput" type="text" placeholder="Add a new task (e.g. Finish report)..." autocomplete="off" maxlength="150"/>
           <select class="priority-select" id="taskPriority" title="Task Priority">
             <option value="HIGH">High</option>
             <option value="MED" selected>Med</option>
@@ -1896,6 +1896,10 @@ async function api(url, method = 'GET', body = null) {
   };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(API_BASE + url, opts);
+  if (res.status === 429) {
+    toast('⚠️ Too many requests! Please slow down and try again shortly.', 'warning', 4500);
+    throw new Error('Too many requests. Please wait a moment.');
+  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
@@ -2038,6 +2042,10 @@ document.getElementById('addTaskForm').addEventListener('submit', async e => {
   const text = input.value.trim();
   const priority = prioSelect ? prioSelect.value : 'MED';
   if (!text) return;
+  if (text.length > 150) {
+    toast('Task text cannot exceed 150 characters.', 'warning', 3000);
+    return;
+  }
   try {
     await api('/api/tasks', 'POST', { text, priority });
     input.value = '';

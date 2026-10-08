@@ -176,11 +176,66 @@ public class TaskRouletteServer {
                 + ",\"createdAt\":\"" + esc(createdAt) + "\",\"priority\":\"" + esc(normalizePriority(priority)) + "\"}";
     }
 
+    // ── In-Memory Rate Limiter & Sanitization ──────────────────────────────────
+    static final class RateLimiter {
+        private static final int MAX_REQUESTS = 40; // max requests per minute
+        private static final long WINDOW_MS = 60_000L;
+
+        private static final class ClientTracker {
+            final List<Long> timestamps = new ArrayList<>();
+        }
+
+        private static final Map<String, ClientTracker> clients = new java.util.concurrent.ConcurrentHashMap<>();
+
+        public static synchronized boolean checkRateLimit(String clientId) {
+            long now = System.currentTimeMillis();
+            ClientTracker tracker = clients.computeIfAbsent(clientId, k -> new ClientTracker());
+            tracker.timestamps.removeIf(t -> now - t > WINDOW_MS);
+            if (tracker.timestamps.size() >= MAX_REQUESTS) {
+                return false;
+            }
+            tracker.timestamps.add(now);
+            return true;
+        }
+
+        public static void reset() {
+            clients.clear();
+        }
+    }
+
+    static String getClientKey(HttpExchange ex) {
+        String ip = "unknown";
+        if (ex.getRemoteAddress() != null && ex.getRemoteAddress().getAddress() != null) {
+            ip = ex.getRemoteAddress().getAddress().getHostAddress();
+        }
+        return ip + "_" + getUserId(ex);
+    }
+
+    static boolean checkRateLimit(HttpExchange ex) throws IOException {
+        if (!RateLimiter.checkRateLimit(getClientKey(ex))) {
+            cors(ex);
+            ex.getResponseHeaders().set("Retry-After", "5");
+            err(ex, 429, "Too many requests. Please slow down and try again shortly.");
+            return false;
+        }
+        return true;
+    }
+
+    static String sanitizeHtml(String input) {
+        if (input == null) return "";
+        return input.replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace("\"", "&quot;")
+                    .replace("'", "&#x27;");
+    }
+
     // ── /api/tasks ─────────────────────────────────────────────────────────────
     static class TasksHandler implements HttpHandler {
         @Override public void handle(HttpExchange ex) throws IOException {
             String method = ex.getRequestMethod();
             if ("OPTIONS".equals(method)) { cors(ex); ex.sendResponseHeaders(204, -1); return; }
+            if (!checkRateLimit(ex)) return;
 
             String path = ex.getRequestURI().getPath();
             String[] parts = path.split("/");
@@ -242,6 +297,11 @@ public class TaskRouletteServer {
             String text = strField(b, "text");
             if (text == null || text.isBlank()) { err(ex, 400, "text is required"); return; }
             text = text.strip();
+            if (text.length() > 150) {
+                err(ex, 400, "Task text cannot exceed 150 characters");
+                return;
+            }
+            text = sanitizeHtml(text);
             String priority = normalizePriority(strField(b, "priority"));
             try (var c = conn();
                  var ps = c.prepareStatement(
@@ -275,7 +335,12 @@ public class TaskRouletteServer {
                 }
 
                 if (newText != null && !newText.isBlank()) {
-                    existingText = newText.strip();
+                    newText = newText.strip();
+                    if (newText.length() > 150) {
+                        err(ex, 400, "Task text cannot exceed 150 characters");
+                        return;
+                    }
+                    existingText = sanitizeHtml(newText);
                     try (var ps = c.prepareStatement("UPDATE tasks SET text=? WHERE id=? AND user_id=?")) {
                         ps.setString(1, existingText);
                         ps.setInt(2, id);
@@ -359,6 +424,7 @@ public class TaskRouletteServer {
     static class StreakHandler implements HttpHandler {
         @Override public void handle(HttpExchange ex) throws IOException {
             if ("OPTIONS".equals(ex.getRequestMethod())) { cors(ex); ex.sendResponseHeaders(204, -1); return; }
+            if (!checkRateLimit(ex)) return;
 
             String userId = getUserId(ex);
 
@@ -455,6 +521,7 @@ public class TaskRouletteServer {
     static class UserHandler implements HttpHandler {
         @Override public void handle(HttpExchange ex) throws IOException {
             if ("OPTIONS".equals(ex.getRequestMethod())) { cors(ex); ex.sendResponseHeaders(204, -1); return; }
+            if (!checkRateLimit(ex)) return;
 
             String method = ex.getRequestMethod();
             String userId = getUserId(ex);
@@ -481,6 +548,8 @@ public class TaskRouletteServer {
                     String name = strField(b, "name");
                     if (name == null || name.isBlank()) name = "User";
                     name = name.strip();
+                    if (name.length() > 30) name = name.substring(0, 30);
+                    name = sanitizeHtml(name);
 
                     try (var ps = c.prepareStatement("INSERT OR REPLACE INTO users(id, name, last_active) VALUES(?, ?, datetime('now','localtime'))")) {
                         ps.setString(1, userId);

@@ -55,6 +55,7 @@ Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and
 | **Sound Effects** | Wheel ticking, win fanfare and timer chime, created with the Web Audio API. Mute toggle included. |
 | **Dark / Light Mode** | Theme toggle, remembered in the browser. |
 | **Responsive Design** | Works from large monitors down to 375px phone screens. |
+| **Rate Limiting & Security** | In-memory sliding-window rate limiter (HTTP 429), strict 150-char validation, and HTML sanitization defending against XSS and spam. |
 | **Docker Ready** | Multi-stage Dockerfile and automatic `PORT` binding for cloud deployment. |
 
 ---
