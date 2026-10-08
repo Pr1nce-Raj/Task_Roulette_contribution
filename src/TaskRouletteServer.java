@@ -41,6 +41,7 @@ public class TaskRouletteServer {
         srv.createContext("/api/user", new UserHandler());
         srv.createContext("/api/export", new ExportHandler());
         srv.createContext("/api/import", new ImportHandler());
+        srv.createContext("/api/stats", new StatsHandler());
         srv.createContext("/", new StaticHandler());
         srv.setExecutor(null);
         srv.start();
@@ -794,6 +795,66 @@ public class TaskRouletteServer {
             }
             list.add(cur.toString());
             return list;
+        }
+    }
+
+    // ── /api/stats (Productivity Analytics & Heatmap) ─────────────────────────
+    static class StatsHandler implements HttpHandler {
+        @Override public void handle(HttpExchange ex) throws IOException {
+            if ("OPTIONS".equals(ex.getRequestMethod())) { cors(ex); ex.sendResponseHeaders(204, -1); return; }
+            if (!"GET".equals(ex.getRequestMethod())) { err(ex, 405, "Method not allowed"); return; }
+
+            String userId = getUserId(ex);
+            try (var c = conn()) {
+                Map<String, Integer> dateCounts = new LinkedHashMap<>();
+                try (var ps = c.prepareStatement(
+                    "SELECT completed_date, COUNT(*) FROM completion_log WHERE user_id=? GROUP BY completed_date ORDER BY completed_date ASC")) {
+                    ps.setString(1, userId);
+                    try (var rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            dateCounts.put(rs.getString(1), rs.getInt(2));
+                        }
+                    }
+                }
+
+                int totalTasks = 0;
+                for (int cnt : dateCounts.values()) totalTasks += cnt;
+
+                double totalFocusHours = Math.round((totalTasks * 25.0 / 60.0) * 10.0) / 10.0;
+                double avgDaily = dateCounts.isEmpty() ? 0.0 : Math.round(((double) totalTasks / dateCounts.size()) * 10.0) / 10.0;
+
+                LocalDate today = LocalDate.now();
+                LocalDate startOfWeek = today.minusDays(today.getDayOfWeek().getValue() - 1);
+                String startOfWeekStr = startOfWeek.toString();
+                String thisMonthPrefix = today.toString().substring(0, 7);
+
+                int thisWeek = 0;
+                int thisMonth = 0;
+                for (var entry : dateCounts.entrySet()) {
+                    String d = entry.getKey();
+                    if (d.compareTo(startOfWeekStr) >= 0) thisWeek += entry.getValue();
+                    if (d.startsWith(thisMonthPrefix)) thisMonth += entry.getValue();
+                }
+
+                List<String> heatmapItems = new ArrayList<>();
+                for (int i = 59; i >= 0; i--) {
+                    LocalDate d = today.minusDays(i);
+                    String dStr = d.toString();
+                    int count = dateCounts.getOrDefault(dStr, 0);
+                    heatmapItems.add(String.format("{\"date\":\"%s\",\"count\":%d}", dStr, count));
+                }
+
+                String jsonResponse = String.format(
+                    Locale.US,
+                    "{\"totalCompleted\":%d,\"totalFocusHours\":%.1f,\"avgDailyTasks\":%.1f,\"thisWeekCount\":%d,\"thisMonthCount\":%d,\"heatmap\":[%s]}",
+                    totalTasks, totalFocusHours, avgDaily, thisWeek, thisMonth, String.join(",", heatmapItems)
+                );
+
+                json(ex, 200, jsonResponse);
+            } catch (Exception e) {
+                e.printStackTrace();
+                err(ex, 500, e.getMessage());
+            }
         }
     }
 

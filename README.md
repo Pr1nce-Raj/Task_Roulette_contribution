@@ -40,6 +40,7 @@ Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and
 |---|---|
 | **Streak System** | Tracks current streak, best streak and total completed tasks, based on real completion history. |
 | **7-Day Activity Calendar** | Shows which of the last 7 days you completed tasks. |
+| **Productivity Analytics & Heatmap** | 60-day GitHub-style calendar heatmap, total focus hours, daily velocity, and weekly completion metrics modal. |
 | **Confetti** | Particle effect when a spin lands or a task is completed. |
 
 ### 👤 Users and Data

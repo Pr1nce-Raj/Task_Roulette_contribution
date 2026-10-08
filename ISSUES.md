@@ -128,9 +128,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `analytics`
 - **Description**: Add an analytics modal displaying total focus hours completed, average daily tasks done, and a monthly heatmap calendar.
 - **Tasks**:
-  - [ ] Create `GET /api/stats` endpoint summarizing completed tasks by month/week.
-  - [ ] Design SVG / Canvas heatmap (similar to GitHub contributions graph).
-  - [ ] Add "View Analytics 📊" button in header.
+  - [x] Create `GET /api/stats` endpoint summarizing completed tasks by month/week.
+  - [x] Design SVG / Canvas heatmap (similar to GitHub contributions graph).
+  - [x] Add "View Analytics 📊" button in header.
 
 ---
 
