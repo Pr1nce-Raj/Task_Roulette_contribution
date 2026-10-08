@@ -47,6 +47,7 @@ Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and
 |---|---|
 | **Multi-User Profiles** | Every profile has its own tasks, wheel and streak. Profiles can be renamed. |
 | **SQLite Persistence** | All data is stored in `taskroulette.db` and survives server restarts. |
+| **Backup Export & Import** | Download tasks and streak history as JSON or CSV (Excel compatible). Import backup files with auto-deduplication and validation. |
 
 ### 🎨 Experience
 | Feature | Description |

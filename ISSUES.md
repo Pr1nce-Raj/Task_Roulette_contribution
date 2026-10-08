@@ -57,9 +57,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `data`
 - **Description**: Allow users to export all tasks and streak history to a `.json` or `.csv` file and import it back to another device.
 - **Tasks**:
-  - [ ] Create `GET /api/export` endpoint returning full JSON dump.
-  - [ ] Create `POST /api/import` endpoint to load tasks into SQLite.
-  - [ ] Add Export/Import buttons in the UI settings panel.
+  - [x] Create `GET /api/export` endpoint returning full JSON dump.
+  - [x] Create `POST /api/import` endpoint to load tasks into SQLite.
+  - [x] Add Export/Import buttons in the UI settings panel.
 
 ---
 

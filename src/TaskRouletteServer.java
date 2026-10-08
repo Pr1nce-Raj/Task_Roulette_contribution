@@ -39,6 +39,8 @@ public class TaskRouletteServer {
         srv.createContext("/api/tasks", new TasksHandler());
         srv.createContext("/api/streak", new StreakHandler());
         srv.createContext("/api/user", new UserHandler());
+        srv.createContext("/api/export", new ExportHandler());
+        srv.createContext("/api/import", new ImportHandler());
         srv.createContext("/", new StaticHandler());
         srv.setExecutor(null);
         srv.start();
@@ -492,6 +494,306 @@ public class TaskRouletteServer {
             } catch (Exception e) {
                 err(ex, 500, e.getMessage());
             }
+        }
+    }
+
+    // ── /api/export (Backup Export JSON/CSV) ──────────────────────────────────
+    static class ExportHandler implements HttpHandler {
+        @Override public void handle(HttpExchange ex) throws IOException {
+            if ("OPTIONS".equals(ex.getRequestMethod())) { cors(ex); ex.sendResponseHeaders(204, -1); return; }
+            if (!"GET".equals(ex.getRequestMethod())) { err(ex, 405, "Method not allowed"); return; }
+
+            String userId = getUserId(ex);
+            String format = "json";
+            String query = ex.getRequestURI().getQuery();
+            if (query != null) {
+                for (String p : query.split("&")) {
+                    String[] kv = p.split("=", 2);
+                    if (kv.length == 2 && "format".equalsIgnoreCase(kv[0])) {
+                        format = kv[1].toLowerCase().trim();
+                    }
+                }
+            }
+
+            try (var c = conn()) {
+                List<String> taskListJson = new ArrayList<>();
+                List<String[]> taskRows = new ArrayList<>();
+                try (var ps = c.prepareStatement("SELECT id, text, completed, created_at, priority FROM tasks WHERE user_id=? ORDER BY id ASC")) {
+                    ps.setString(1, userId);
+                    try (var rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            int id = rs.getInt(1);
+                            String text = rs.getString(2);
+                            boolean done = rs.getInt(3) == 1;
+                            String createdAt = rs.getString(4);
+                            String prio = rs.getString(5);
+                            taskListJson.add(taskJson(id, text, done, createdAt, prio));
+                            taskRows.add(new String[]{ text, String.valueOf(done), normalizePriority(prio), createdAt != null ? createdAt : "" });
+                        }
+                    }
+                }
+
+                int totalCompleted = 0;
+                try (var ps = c.prepareStatement("SELECT COUNT(*) FROM completion_log WHERE user_id=?")) {
+                    ps.setString(1, userId);
+                    try (var rs = ps.executeQuery()) {
+                        if (rs.next()) totalCompleted = rs.getInt(1);
+                    }
+                }
+
+                TreeSet<LocalDate> dates = new TreeSet<>();
+                try (var ps = c.prepareStatement("SELECT DISTINCT completed_date FROM completion_log WHERE user_id=? ORDER BY completed_date ASC")) {
+                    ps.setString(1, userId);
+                    try (var rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            String d = rs.getString(1);
+                            if (d != null && !d.isBlank()) {
+                                try { dates.add(LocalDate.parse(d)); } catch (Exception ignored) {}
+                            }
+                        }
+                    }
+                }
+
+                LocalDate today = LocalDate.now();
+                LocalDate yesterday = today.minusDays(1);
+                boolean doneToday = dates.contains(today);
+                int currentStreak = 0;
+                if (doneToday) {
+                    currentStreak = 1;
+                    LocalDate check = yesterday;
+                    while (dates.contains(check)) { currentStreak++; check = check.minusDays(1); }
+                } else if (dates.contains(yesterday)) {
+                    currentStreak = 1;
+                    LocalDate check = yesterday.minusDays(1);
+                    while (dates.contains(check)) { currentStreak++; check = check.minusDays(1); }
+                }
+
+                int bestStreak = 0;
+                int run = 0;
+                LocalDate prev = null;
+                for (LocalDate d : dates) {
+                    if (prev != null && ChronoUnit.DAYS.between(prev, d) == 1) run++;
+                    else run = 1;
+                    if (run > bestStreak) bestStreak = run;
+                    prev = d;
+                }
+                if (currentStreak > bestStreak) bestStreak = currentStreak;
+
+                if ("csv".equals(format)) {
+                    StringBuilder csv = new StringBuilder("task,completed,priority,created_at\n");
+                    for (String[] r : taskRows) {
+                        csv.append(csvEscape(r[0])).append(",")
+                           .append(r[1]).append(",")
+                           .append(r[2]).append(",")
+                           .append(csvEscape(r[3])).append("\n");
+                    }
+                    cors(ex);
+                    ex.getResponseHeaders().set("Content-Type", "text/csv; charset=UTF-8");
+                    ex.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"taskroulette_tasks.csv\"");
+                    byte[] bytes = csv.toString().getBytes(StandardCharsets.UTF_8);
+                    ex.sendResponseHeaders(200, bytes.length);
+                    try (var os = ex.getResponseBody()) { os.write(bytes); }
+                } else {
+                    String jsonOut = String.format(
+                        "{\"version\":1,\"exportedAt\":\"%s\",\"userId\":\"%s\",\"tasks\":[%s],\"streak\":{\"currentStreak\":%d,\"bestStreak\":%d,\"totalCompleted\":%d}}",
+                        LocalDate.now().toString(),
+                        esc(userId),
+                        String.join(",", taskListJson),
+                        currentStreak, bestStreak, totalCompleted
+                    );
+                    cors(ex);
+                    ex.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+                    ex.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"taskroulette_backup.json\"");
+                    byte[] bytes = jsonOut.getBytes(StandardCharsets.UTF_8);
+                    ex.sendResponseHeaders(200, bytes.length);
+                    try (var os = ex.getResponseBody()) { os.write(bytes); }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                err(ex, 500, e.getMessage());
+            }
+        }
+
+        private String csvEscape(String val) {
+            if (val == null) return "\"\"";
+            String escaped = val.replace("\"", "\"\"");
+            return "\"" + escaped + "\"";
+        }
+    }
+
+    // ── /api/import (Backup Import JSON/CSV) ──────────────────────────────────
+    static class ImportHandler implements HttpHandler {
+        static class ParsedTask {
+            String text;
+            boolean completed;
+            String priority;
+        }
+
+        @Override public void handle(HttpExchange ex) throws IOException {
+            if ("OPTIONS".equals(ex.getRequestMethod())) { cors(ex); ex.sendResponseHeaders(204, -1); return; }
+            if (!"POST".equals(ex.getRequestMethod())) { err(ex, 405, "Method not allowed"); return; }
+
+            String userId = getUserId(ex);
+            String rawBody = body(ex);
+            if (rawBody == null || rawBody.isBlank()) {
+                err(ex, 400, "Empty request body");
+                return;
+            }
+
+            List<ParsedTask> items;
+            try {
+                items = parseTasks(rawBody.trim());
+            } catch (Exception e) {
+                err(ex, 400, "Invalid backup file: " + e.getMessage());
+                return;
+            }
+
+            if (items.isEmpty()) {
+                err(ex, 400, "No valid tasks found in backup file");
+                return;
+            }
+
+            // Validate all items before inserting
+            for (ParsedTask pt : items) {
+                if (pt.text == null || pt.text.isBlank()) {
+                    err(ex, 400, "Task text cannot be empty");
+                    return;
+                }
+                if (pt.text.length() > 150) {
+                    err(ex, 400, "Task text exceeds 150 characters");
+                    return;
+                }
+            }
+
+            int imported = 0;
+            int skipped = 0;
+
+            try (var c = conn()) {
+                c.setAutoCommit(false);
+                try {
+                    for (ParsedTask pt : items) {
+                        String cleanText = pt.text.trim();
+                        // Check if identical task already exists for this user
+                        boolean exists = false;
+                        try (var ps = c.prepareStatement("SELECT COUNT(*) FROM tasks WHERE user_id=? AND LOWER(TRIM(text))=LOWER(?)")) {
+                            ps.setString(1, userId);
+                            ps.setString(2, cleanText);
+                            try (var rs = ps.executeQuery()) {
+                                if (rs.next() && rs.getInt(1) > 0) exists = true;
+                            }
+                        }
+
+                        if (exists) {
+                            skipped++;
+                        } else {
+                            try (var ins = c.prepareStatement("INSERT INTO tasks(user_id, text, completed, priority) VALUES(?, ?, ?, ?)")) {
+                                ins.setString(1, userId);
+                                ins.setString(2, cleanText);
+                                ins.setInt(3, pt.completed ? 1 : 0);
+                                ins.setString(4, normalizePriority(pt.priority));
+                                ins.executeUpdate();
+                                imported++;
+                            }
+                        }
+                    }
+                    c.commit();
+                } catch (Exception exx) {
+                    c.rollback();
+                    throw exx;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                err(ex, 500, "Database error during import: " + e.getMessage());
+                return;
+            }
+
+            String msg = imported + " tasks imported, " + skipped + " skipped";
+            json(ex, 200, String.format("{\"success\":true,\"imported\":%d,\"skipped\":%d,\"message\":\"%s\"}", imported, skipped, esc(msg)));
+        }
+
+        private List<ParsedTask> parseTasks(String raw) throws Exception {
+            List<ParsedTask> result = new ArrayList<>();
+            if (raw.startsWith("{") || raw.startsWith("[")) {
+                // JSON format
+                Pattern objPattern = Pattern.compile("\\{[^{}]*\\}");
+                Matcher m = objPattern.matcher(raw);
+                while (m.find()) {
+                    String block = m.group();
+                    String text = strField(block, "text");
+                    if (text == null) text = strField(block, "task");
+                    if (text == null || text.isBlank()) continue;
+
+                    Boolean comp = boolField(block, "completed");
+                    if (comp == null) {
+                        Matcher cm = Pattern.compile("\"completed\"\\s*:\\s*(1|0)").matcher(block);
+                        comp = cm.find() && "1".equals(cm.group(1));
+                    }
+                    String prio = strField(block, "priority");
+
+                    ParsedTask pt = new ParsedTask();
+                    pt.text = text.trim();
+                    pt.completed = comp != null && comp;
+                    pt.priority = normalizePriority(prio);
+                    result.add(pt);
+                }
+            } else {
+                // CSV format
+                String[] lines = raw.split("\\r?\\n");
+                boolean first = true;
+                for (String line : lines) {
+                    line = line.trim();
+                    if (line.isEmpty()) continue;
+                    List<String> cols = parseCsvLine(line);
+                    if (cols.isEmpty()) continue;
+
+                    if (first) {
+                        first = false;
+                        String f0 = cols.get(0).toLowerCase();
+                        if ("task".equals(f0) || "text".equals(f0) || "title".equals(f0)) {
+                            continue;
+                        }
+                    }
+
+                    ParsedTask pt = new ParsedTask();
+                    pt.text = cols.get(0).trim();
+                    pt.completed = cols.size() > 1 && ("true".equalsIgnoreCase(cols.get(1).trim()) || "1".equals(cols.get(1).trim()));
+                    pt.priority = cols.size() > 2 ? normalizePriority(cols.get(2).trim()) : "MED";
+                    result.add(pt);
+                }
+            }
+            return result;
+        }
+
+        private List<String> parseCsvLine(String line) {
+            List<String> list = new ArrayList<>();
+            StringBuilder cur = new StringBuilder();
+            boolean inQuotes = false;
+            for (int i = 0; i < line.length(); i++) {
+                char ch = line.charAt(i);
+                if (inQuotes) {
+                    if (ch == '"') {
+                        if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                            cur.append('"');
+                            i++;
+                        } else {
+                            inQuotes = false;
+                        }
+                    } else {
+                        cur.append(ch);
+                    }
+                } else {
+                    if (ch == '"') {
+                        inQuotes = true;
+                    } else if (ch == ',') {
+                        list.add(cur.toString());
+                        cur.setLength(0);
+                    } else {
+                        cur.append(ch);
+                    }
+                }
+            }
+            list.add(cur.toString());
+            return list;
         }
     }
 
