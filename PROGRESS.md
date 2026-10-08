@@ -15,3 +15,5 @@
 8. Added Task Priority / Tags (High, Medium, Low) with SQLite priority column migration and colored frontend badges. PASS.
 9. Implemented Weighted Roulette Wheel based on task priority (High: 3x, Med: 2x, Low: 1x dynamic arcs, physics, and probability landing). PASS.
 10. Added Export & Import Tasks (JSON & CSV Backup) with GET /api/export, POST /api/import, validation, duplicate prevention, and dedicated UI modal. PASS.
+11. Added keyboard shortcuts for power users (Space/S to spin, T to start/pause timer, R to reset timer, / to focus task input, Esc to close modals, and ? for shortcuts help modal). PASS.
+

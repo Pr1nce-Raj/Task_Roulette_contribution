@@ -67,11 +67,11 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `accessibility`
 - **Description**: Enable keyboard navigation and shortcuts for faster task management and wheel spinning.
 - **Tasks**:
-  - [ ] `Spacebar` / `S`: Spin roulette wheel.
-  - [ ] `T`: Start / Pause focus timer.
-  - [ ] `R`: Reset timer.
-  - [ ] `/`: Focus task input field.
-  - [ ] `Escape`: Close modals and unfocus.
+  - [x] `Spacebar` / `S`: Spin roulette wheel.
+  - [x] `T`: Start / Pause focus timer.
+  - [x] `R`: Reset timer.
+  - [x] `/`: Focus task input field.
+  - [x] `Escape`: Close modals and unfocus.
 
 ---
 

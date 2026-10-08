@@ -1112,6 +1112,43 @@ ul { list-style: none; }
   background: rgba(99, 102, 241, 0.15);
 }
 
+/* Shortcuts modal list */
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+}
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-sub);
+  border: 1px solid var(--border);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+kbd {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--p-light);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  box-shadow: 0 2px 0 var(--border);
+}
+
 /* ═══════════════════════════════════════════
    TOASTS & CONFETTI
 ═══════════════════════════════════════════ */
@@ -1184,6 +1221,9 @@ ul { list-style: none; }
 
       <!-- Backup Export/Import -->
       <button class="icon-btn" onclick="openBackupModal()" title="Export / Import Tasks (JSON / CSV)">💾</button>
+
+      <!-- Keyboard Shortcuts Help -->
+      <button class="icon-btn" onclick="openShortcutsModal()" title="Keyboard Shortcuts (?)">⌨️</button>
 
       <!-- Sound & Theme Toggles -->
       <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Sound Effects">🔊</button>
@@ -1432,6 +1472,43 @@ ul { list-style: none; }
   </div>
 </div>
 
+<!-- ─── KEYBOARD SHORTCUTS MODAL ─── -->
+<div class="modal-overlay" id="shortcutsModal" onclick="closeShortcutsModal(event)">
+  <div class="modal-window" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>⌨️ Keyboard Shortcuts</h3>
+      <button class="modal-close" onclick="closeShortcutsModal()">&times;</button>
+    </div>
+    <p class="modal-tagline">Boost your productivity with quick keyboard commands.</p>
+    <div class="shortcuts-list">
+      <div class="shortcut-row">
+        <span>Spin Roulette Wheel</span>
+        <span class="shortcut-keys"><kbd>Space</kbd> or <kbd>S</kbd></span>
+      </div>
+      <div class="shortcut-row">
+        <span>Start / Pause Focus Timer</span>
+        <span class="shortcut-keys"><kbd>T</kbd></span>
+      </div>
+      <div class="shortcut-row">
+        <span>Reset Focus Timer</span>
+        <span class="shortcut-keys"><kbd>R</kbd></span>
+      </div>
+      <div class="shortcut-row">
+        <span>Focus "Add Task" Input</span>
+        <span class="shortcut-keys"><kbd>/</kbd></span>
+      </div>
+      <div class="shortcut-row">
+        <span>Close Modal / Unfocus Input</span>
+        <span class="shortcut-keys"><kbd>Esc</kbd></span>
+      </div>
+      <div class="shortcut-row">
+        <span>Open Shortcuts Help</span>
+        <span class="shortcut-keys"><kbd>?</kbd></span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Rack -->
 <div id="toast-rack"></div>
 
@@ -1537,6 +1614,87 @@ function closeProfileModal(e) {
   if (e && e.target !== e.currentTarget) return;
   document.getElementById('profileModal').style.display = 'none';
 }
+
+function openShortcutsModal() {
+  const m = document.getElementById('shortcutsModal');
+  if (m) m.style.display = 'flex';
+}
+
+function closeShortcutsModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  const m = document.getElementById('shortcutsModal');
+  if (m) m.style.display = 'none';
+}
+
+function closeAllModals() {
+  const p = document.getElementById('profileModal');
+  if (p) p.style.display = 'none';
+  const s = document.getElementById('shortcutsModal');
+  if (s) s.style.display = 'none';
+}
+
+/* ════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+════════════════════════════════════════════ */
+window.addEventListener('keydown', e => {
+  const target = e.target;
+  const isInput = target && (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable);
+
+  // Esc closes all modals and unfocuses active input
+  if (e.key === 'Escape') {
+    closeAllModals();
+    if (isInput) target.blur();
+    return;
+  }
+
+  // Do not process shortcuts while user is typing in form fields
+  if (isInput) return;
+
+  // Space or S: Spin roulette wheel
+  if (e.code === 'Space' || e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    if (!isSpinning && typeof spinWheel === 'function') {
+      spinWheel();
+    }
+    return;
+  }
+
+  // T: Start or pause timer
+  if (e.key === 't' || e.key === 'T') {
+    e.preventDefault();
+    if (timerInterval) {
+      pauseFocusTimer();
+    } else {
+      startFocusTimer();
+    }
+    return;
+  }
+
+  // R: Reset timer
+  if (e.key === 'r' || e.key === 'R') {
+    e.preventDefault();
+    resetFocusTimer();
+    return;
+  }
+
+  // /: Jump to Add Task input
+  if (e.key === '/') {
+    e.preventDefault();
+    const input = document.getElementById('taskInput');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+    return;
+  }
+
+  // ?: Open keyboard shortcuts help modal
+  if (e.key === '?') {
+    e.preventDefault();
+    openShortcutsModal();
+    return;
+  }
+});
 
 function renderProfileListItems() {
   const box = document.getElementById('profileRowsContainer');
