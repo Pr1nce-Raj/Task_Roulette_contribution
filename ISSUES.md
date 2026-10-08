@@ -99,8 +99,8 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `ui/ux`
 - **Description**: Automatically detect OS color scheme (`prefers-color-scheme: dark`) on first visit while preserving manual toggle overrides.
 - **Tasks**:
-  - [ ] Add `window.matchMedia('(prefers-color-scheme: dark)')` listener in frontend JS.
-  - [ ] Update theme automatically if user hasn't explicitly set a preference in `localStorage`.
+  - [x] Add `window.matchMedia('(prefers-color-scheme: dark)')` listener in frontend JS.
+  - [x] Update theme automatically if user hasn't explicitly set a preference in `localStorage`.
 
 ---
 
