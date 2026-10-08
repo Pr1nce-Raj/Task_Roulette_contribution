@@ -136,7 +136,7 @@ All endpoints accept an `X-User-Id` header to separate users.
 | Method | Endpoint | Body | Description |
 |---|---|---|---|
 | `GET` | `/api/tasks` | none | List all tasks of the user |
-| `POST` | `/api/tasks` | `{"text": "...", "priority": "HIGH|MED|LOW"}` | Create a task (priority defaults to `MED`, returns `201 Created`) |
+| `POST` | `/api/tasks` | `{"text": "...", "priority": "HIGH|MED|LOW"}` | Create a task (priority defaults to `MED`, rejects incomplete duplicates with `409 Conflict`, returns `201 Created`) |
 | `PUT` | `/api/tasks/{id}` | `{"completed": true}`, `{"text": "..."}` or `{"priority": "..."}` | Update a task. Completing a task also updates the streak log. |
 | `DELETE` | `/api/tasks/{id}` | none | Delete one task |
 | `DELETE` | `/api/tasks/completed` | none | Delete all completed tasks |

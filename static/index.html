@@ -2045,7 +2045,8 @@ document.getElementById('addTaskForm').addEventListener('submit', async e => {
     await loadTasks();
     toast('Task added to wheel! 🎯', 'success', 2000);
   } catch (err) {
-    toast(err.message, 'error');
+    const isDup = err.message && err.message.toLowerCase().includes('already exists');
+    toast(isDup ? 'This task already exists' : err.message, isDup ? 'warning' : 'error');
   }
 });
 
@@ -2067,7 +2068,8 @@ async function toggleTaskStatus(id, isDone) {
       }
     }
   } catch (err) {
-    toast(err.message, 'error');
+    const isDup = err.message && err.message.toLowerCase().includes('already exists');
+    toast(isDup ? 'This task already exists' : err.message, isDup ? 'warning' : 'error');
   }
 }
 

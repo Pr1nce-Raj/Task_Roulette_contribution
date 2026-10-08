@@ -48,8 +48,8 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `bug`, `validation`
 - **Description**: Currently, duplicate task names can be added multiple times. Add validation to alert user if an identical incomplete task already exists.
 - **Tasks**:
-  - [ ] Add backend check in `handlePost` for existing active tasks with identical text.
-  - [ ] Show friendly toast warning in UI if duplicate task is entered.
+  - [x] Add backend check in `handlePost` for existing active tasks with identical text.
+  - [x] Show friendly toast warning in UI if duplicate task is entered.
 
 ---
 

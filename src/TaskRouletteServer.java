@@ -243,16 +243,29 @@ public class TaskRouletteServer {
             if (text == null || text.isBlank()) { err(ex, 400, "text is required"); return; }
             text = text.strip();
             String priority = normalizePriority(strField(b, "priority"));
-            try (var c = conn();
-                 var ps = c.prepareStatement(
+            try (var c = conn()) {
+                try (var ps = c.prepareStatement(
+                    "SELECT id FROM tasks WHERE user_id=? AND completed=0 AND LOWER(TRIM(text)) = LOWER(TRIM(?))")) {
+                    ps.setString(1, userId);
+                    ps.setString(2, text);
+                    try (var rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            err(ex, 409, "Task already exists");
+                            return;
+                        }
+                    }
+                }
+
+                try (var ps = c.prepareStatement(
                      "INSERT INTO tasks(user_id, text, priority) VALUES(?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                ps.setString(1, userId);
-                ps.setString(2, text);
-                ps.setString(3, priority);
-                ps.executeUpdate();
-                var keys = ps.getGeneratedKeys();
-                int newId = keys.next() ? keys.getInt(1) : -1;
-                json(ex, 201, taskJson(newId, text, false, LocalDate.now().toString(), priority));
+                    ps.setString(1, userId);
+                    ps.setString(2, text);
+                    ps.setString(3, priority);
+                    ps.executeUpdate();
+                    var keys = ps.getGeneratedKeys();
+                    int newId = keys.next() ? keys.getInt(1) : -1;
+                    json(ex, 201, taskJson(newId, text, false, LocalDate.now().toString(), priority));
+                }
             }
         }
 
@@ -275,7 +288,20 @@ public class TaskRouletteServer {
                 }
 
                 if (newText != null && !newText.isBlank()) {
-                    existingText = newText.strip();
+                    String candidate = newText.strip();
+                    try (var ps = c.prepareStatement(
+                        "SELECT id FROM tasks WHERE user_id=? AND completed=0 AND id != ? AND LOWER(TRIM(text)) = LOWER(TRIM(?))")) {
+                        ps.setString(1, userId);
+                        ps.setInt(2, id);
+                        ps.setString(3, candidate);
+                        try (var rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                err(ex, 409, "Task already exists");
+                                return;
+                            }
+                        }
+                    }
+                    existingText = candidate;
                     try (var ps = c.prepareStatement("UPDATE tasks SET text=? WHERE id=? AND user_id=?")) {
                         ps.setString(1, existingText);
                         ps.setInt(2, id);
@@ -310,6 +336,18 @@ public class TaskRouletteServer {
                                 ps.executeUpdate();
                             }
                         } else {
+                            try (var ps = c.prepareStatement(
+                                "SELECT id FROM tasks WHERE user_id=? AND completed=0 AND id != ? AND LOWER(TRIM(text)) = LOWER(TRIM(?))")) {
+                                ps.setString(1, userId);
+                                ps.setInt(2, id);
+                                ps.setString(3, existingText);
+                                try (var rs = ps.executeQuery()) {
+                                    if (rs.next()) {
+                                        err(ex, 409, "Task already exists");
+                                        return;
+                                    }
+                                }
+                            }
                             try (var ps = c.prepareStatement("UPDATE tasks SET completed=0, completed_at=NULL WHERE id=? AND user_id=?")) {
                                 ps.setInt(1, id);
                                 ps.setString(2, userId);
