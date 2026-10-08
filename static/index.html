@@ -1182,6 +1182,9 @@ ul { list-style: none; }
         <span class="profile-caret">▾</span>
       </button>
 
+      <!-- Backup Export/Import -->
+      <button class="icon-btn" onclick="openBackupModal()" title="Export / Import Tasks (JSON / CSV)">💾</button>
+
       <!-- Sound & Theme Toggles -->
       <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Sound Effects">🔊</button>
       <button class="icon-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
@@ -1387,6 +1390,45 @@ ul { list-style: none; }
       <div class="profile-rows" id="profileRowsContainer"></div>
       <button class="btn-add-profile" onclick="createNewProfile()">＋ Create New Profile</button>
     </div>
+
+    <!-- Data Backup & Restore in Settings -->
+    <div style="margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1.5px solid var(--border);">
+      <label style="font-size:0.75rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.4rem;">💾 Data Backup & Restore</label>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button class="btn-clear" onclick="exportData('json')">📥 Export JSON</button>
+        <button class="btn-clear" onclick="exportData('csv')">📊 Export CSV</button>
+        <button class="btn-primary" onclick="triggerImportFileInput()">📤 Import File</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── EXPORT / IMPORT BACKUP MODAL ─── -->
+<div class="modal-overlay" id="backupModal" onclick="closeBackupModal(event)">
+  <div class="modal-window" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>💾 Backup & Restore Tasks</h3>
+      <button class="modal-close" onclick="closeBackupModal()">&times;</button>
+    </div>
+    <p class="modal-tagline">Save your tasks and streak to a local file or restore them anytime.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+      <div style="background: var(--surface-sub); padding: 1rem; border-radius: var(--r-sm); border: 1.5px solid var(--border);">
+        <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 0.3rem;">📥 Export Tasks & Streak</h4>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0.8rem;">Download your active and completed tasks along with streak history.</p>
+        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+          <button class="btn-primary" onclick="exportData('json')">Download JSON</button>
+          <button class="btn-clear" onclick="exportData('csv')">Download CSV (Excel)</button>
+        </div>
+      </div>
+
+      <div style="background: var(--surface-sub); padding: 1rem; border-radius: var(--r-sm); border: 1.5px solid var(--border);">
+        <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 0.3rem;">📤 Import Tasks</h4>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0.8rem;">Restore tasks from a .json or .csv backup. Duplicate tasks are automatically skipped.</p>
+        <button class="btn-primary" onclick="triggerImportFileInput()">Select Backup File (.json / .csv)</button>
+        <input type="file" id="importFileInput" style="display: none;" accept=".json,.csv" onchange="handleFileImport(this)"/>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1572,6 +1614,102 @@ function deleteUserProfile(id) {
   let profiles = loadAllProfiles().filter(p => p.id !== id);
   localStorage.setItem('tr_user_profiles', JSON.stringify(profiles));
   renderProfileListItems();
+}
+
+/* ════════════════════════════════════════════
+   BACKUP & RESTORE (EXPORT / IMPORT)
+════════════════════════════════════════════ */
+function openBackupModal() {
+  const modal = document.getElementById('backupModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeBackupModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  const modal = document.getElementById('backupModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function exportData(format = 'json') {
+  try {
+    const uid = getActiveUserId();
+    const res = await fetch(`/api/export?format=${format}&userId=${encodeURIComponent(uid)}`, {
+      headers: { 'X-User-Id': uid }
+    });
+    if (!res.ok) throw new Error('Export failed: ' + res.statusText);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `taskroulette_${format}_${new Date().toISOString().slice(0, 10)}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast(`Backup exported successfully as ${format.toUpperCase()}! 📥`, 'success', 2500);
+  } catch (err) {
+    console.error(err);
+    toast('Failed to export backup: ' + err.message, 'error', 3500);
+  }
+}
+
+function triggerImportFileInput() {
+  const inp = document.getElementById('importFileInput');
+  if (inp) inp.click();
+}
+
+async function handleFileImport(input) {
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  const isJson = file.name.endsWith('.json');
+  const isCsv = file.name.endsWith('.csv');
+
+  if (!isJson && !isCsv) {
+    toast('Please select a valid .json or .csv backup file.', 'error', 3000);
+    input.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const content = e.target.result;
+      if (!content || !content.trim()) {
+        toast('Selected backup file is empty.', 'error', 3000);
+        return;
+      }
+
+      const uid = getActiveUserId();
+      const res = await fetch(`/api/import?userId=${encodeURIComponent(uid)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': isJson ? 'application/json' : 'text/csv',
+          'X-User-Id': uid
+        },
+        body: content
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Import failed with status ' + res.status);
+      }
+
+      toast(`✅ ${data.message || 'Tasks imported successfully!'}`, 'success', 4000);
+      closeBackupModal();
+      closeProfileModal();
+      await Promise.all([loadTasks(), loadStreak()]);
+    } catch (err) {
+      console.error(err);
+      toast('❌ Import failed: ' + err.message, 'error', 4500);
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.onerror = () => {
+    toast('Failed to read backup file.', 'error', 3000);
+    input.value = '';
+  };
+  reader.readAsText(file);
 }
 
 /* ════════════════════════════════════════════
