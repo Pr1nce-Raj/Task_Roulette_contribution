@@ -79,9 +79,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `notifications`
 - **Description**: When the focus timer reaches `00:00`, send a native browser notification (via Notification API) so the user gets notified even if the browser tab is minimized or in the background.
 - **Tasks**:
-  - [ ] Request `Notification.requestPermission()` on first timer start.
-  - [ ] Trigger `new Notification('Focus session complete! 🎉')` at `00:00`.
-  - [ ] Play chime sound in background tab if allowed.
+  - [x] Request `Notification.requestPermission()` on first timer start.
+  - [x] Trigger `new Notification('Focus session complete! 🎉')` at `00:00`.
+  - [x] Play chime sound in background tab if allowed.
 
 ---
 

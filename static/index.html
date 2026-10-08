@@ -2425,6 +2425,14 @@ function renderTimerUI() {
 function startFocusTimer() {
   if (timerInterval) return;
   if (timerSeconds <= 0) resetFocusTimer();
+
+  // Request browser notification permission once on timer start
+  if ('Notification' in window && Notification.permission === 'default') {
+    try {
+      Notification.requestPermission();
+    } catch (ignored) {}
+  }
+
   document.getElementById('timerStatusLabel').textContent = 'Focusing...';
   document.getElementById('startTimerBtn').style.opacity = '0.5';
 
@@ -2439,6 +2447,17 @@ function startFocusTimer() {
       document.getElementById('startTimerBtn').style.opacity = '1';
       playChimeBell();
       fireConfetti();
+
+      // Trigger browser notification if allowed
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          const n = new Notification('Focus session complete! 🎉', {
+            body: 'Great job! Take a well-deserved break.'
+          });
+          n.onclick = () => { window.focus(); };
+        } catch (ignored) {}
+      }
+
       toast('⏰ Focus session complete! Take a well-deserved break! 🎉', 'success', 6000);
     }
   }, 1000);

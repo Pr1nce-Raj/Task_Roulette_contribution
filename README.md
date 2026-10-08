@@ -32,7 +32,7 @@ Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and
 | Feature | Description |
 |---|---|
 | **Roulette Wheel** | High-DPI canvas wheel with priority-weighted sector arcs (High: 3x, Med: 2x, Low: 1x), smooth deceleration, and pointer landing. It picks a task proportional to its priority and highlights it with an "IN FOCUS" badge. |
-| **Focus Timer** | Presets (5, 10, 15, 25 and 45 min) or a custom time, with a circular countdown ring that changes color (purple, amber, red). |
+| **Focus Timer** | Presets (5, 10, 15, 25 and 45 min) or a custom time, circular countdown ring with color phases, and native browser push notifications on completion. |
 | **Task Management** | Add, complete and delete tasks with priority tags (`HIGH`, `MED`, `LOW`). Filter by All, Active or Completed, and clear all completed tasks at once. |
 
 ### 🔥 Progress

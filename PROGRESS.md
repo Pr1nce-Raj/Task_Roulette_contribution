@@ -15,3 +15,5 @@
 8. Added Task Priority / Tags (High, Medium, Low) with SQLite priority column migration and colored frontend badges. PASS.
 9. Implemented Weighted Roulette Wheel based on task priority (High: 3x, Med: 2x, Low: 1x dynamic arcs, physics, and probability landing). PASS.
 10. Added Export & Import Tasks (JSON & CSV Backup) with GET /api/export, POST /api/import, validation, duplicate prevention, and dedicated UI modal. PASS.
+11. Added native browser push notifications upon focus session completion with one-time permission request. PASS.
+
