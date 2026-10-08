@@ -842,6 +842,89 @@ ul { list-style: none; }
   align-items: center;
   gap: 1.2rem;
 }
+
+/* Pomodoro Modes & Cycle Badge */
+.pomodoro-mode-bar {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+  background: var(--surface-sub);
+  padding: 0.3rem;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+}
+.pomodoro-tab {
+  flex: 1;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--r-xs);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all var(--dur);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+.pomodoro-tab:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+.pomodoro-tab.active#tabFocus {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35);
+}
+.pomodoro-tab.active#tabShortBreak {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
+}
+.pomodoro-tab.active#tabLongBreak {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.35);
+}
+
+.pomodoro-cycle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 0.2rem;
+}
+.pomodoro-cycle-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.25rem 0.65rem;
+  border-radius: 50px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all var(--dur);
+}
+.pomodoro-cycle-badge.badge-short-break {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.pomodoro-cycle-badge.badge-long-break {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+.pomodoro-mode-desc {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
 .preset-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1322,12 +1405,23 @@ ul { list-style: none; }
       </div>
       <div class="panel-body">
         <div class="timer-container">
+          <!-- Pomodoro Mode Bar & Cycle Counter -->
+          <div class="pomodoro-mode-bar">
+            <button class="pomodoro-tab active" id="tabFocus" onclick="switchPomodoroMode('FOCUS')">🍅 Focus</button>
+            <button class="pomodoro-tab" id="tabShortBreak" onclick="switchPomodoroMode('SHORT_BREAK')">☕ Short Break</button>
+            <button class="pomodoro-tab" id="tabLongBreak" onclick="switchPomodoroMode('LONG_BREAK')">🌴 Long Break</button>
+          </div>
+          <div class="pomodoro-cycle-row">
+            <span class="pomodoro-cycle-badge" id="pomodoroCycleBadge">🍅 Cycle 1 of 4</span>
+            <span class="pomodoro-mode-desc" id="pomodoroModeDesc">Stay focused on your task</span>
+          </div>
+
           <!-- Preset Chips -->
           <div class="preset-chips">
             <button class="preset-chip" onclick="selectDuration(5, this)">5 min</button>
-            <button class="preset-chip active" onclick="selectDuration(10, this)">10 min</button>
+            <button class="preset-chip" onclick="selectDuration(10, this)">10 min</button>
             <button class="preset-chip" onclick="selectDuration(15, this)">15 min</button>
-            <button class="preset-chip" onclick="selectDuration(25, this)">25 min (Pomodoro)</button>
+            <button class="preset-chip active" onclick="selectDuration(25, this)">25 min (Pomodoro)</button>
             <button class="preset-chip" onclick="selectDuration(45, this)">45 min</button>
           </div>
 
@@ -1345,14 +1439,14 @@ ul { list-style: none; }
               <circle class="dial-fg" id="dialProgress" cx="100" cy="100" r="85"/>
             </svg>
             <div class="dial-center">
-              <div class="dial-digits" id="timerDisplay">10:00</div>
+              <div class="dial-digits" id="timerDisplay">25:00</div>
               <div class="dial-status" id="timerStatusLabel">Ready</div>
             </div>
           </div>
 
           <!-- Controls -->
           <div class="timer-controls">
-            <button class="timer-action btn-timer-start" id="startTimerBtn" onclick="startFocusTimer()">▶ Start</button>
+            <button class="timer-action btn-timer-start" id="startTimerBtn" onclick="startFocusTimer()">▶ Start Focus</button>
             <button class="timer-action btn-timer-pause" onclick="pauseFocusTimer()">⏸ Pause</button>
             <button class="timer-action btn-timer-reset" onclick="resetFocusTimer()">↺ Reset</button>
           </div>
@@ -1461,8 +1555,11 @@ let animFrameId  = null;
 let lastSoundSeg = -1;
 let soundEnabled = true;
 let webAudioCtx  = null;
-let timerSeconds = 600;
-let timerTotalSec= 600;
+let pomodoroMode = 'FOCUS'; // 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK'
+let pomodoroCycle = 1;      // 1..4
+const MODE_DURATIONS = { FOCUS: 25, SHORT_BREAK: 5, LONG_BREAK: 15 };
+let timerSeconds = 25 * 60;
+let timerTotalSec= 25 * 60;
 let timerInterval= null;
 
 /* ════════════════════════════════════════════
@@ -2382,13 +2479,95 @@ function spinWheel() {
 
 function focusWinnerTask() {
   document.getElementById('winnerSpotlight').style.display = 'none';
-  resetFocusTimer();
+  if (pomodoroMode !== 'FOCUS') {
+    switchPomodoroMode('FOCUS', false);
+  } else {
+    resetFocusTimer();
+  }
   startFocusTimer();
 }
 
 /* ════════════════════════════════════════════
-   FOCUS TIMER (POMODORO)
+   FOCUS TIMER & POMODORO BREAK INTERVALS
 ════════════════════════════════════════════ */
+function switchPomodoroMode(mode, autoStart = false) {
+  if (!['FOCUS', 'SHORT_BREAK', 'LONG_BREAK'].includes(mode)) mode = 'FOCUS';
+  pauseFocusTimer();
+  pomodoroMode = mode;
+
+  // Update tabs active state
+  const tabFocus = document.getElementById('tabFocus');
+  const tabShort = document.getElementById('tabShortBreak');
+  const tabLong  = document.getElementById('tabLongBreak');
+  if (tabFocus) tabFocus.classList.toggle('active', mode === 'FOCUS');
+  if (tabShort) tabShort.classList.toggle('active', mode === 'SHORT_BREAK');
+  if (tabLong)  tabLong.classList.toggle('active', mode === 'LONG_BREAK');
+
+  // Update cycle badge & mode description
+  updatePomodoroStatusUI();
+
+  // Set duration according to mode
+  const mins = MODE_DURATIONS[mode] || 25;
+  const customInp = document.getElementById('customMinutesInput');
+  if (customInp) customInp.value = mins;
+  timerTotalSec = timerSeconds = mins * 60;
+  document.getElementById('timerStatusLabel').textContent = 'Ready';
+
+  // Update start button appearance
+  const startBtn = document.getElementById('startTimerBtn');
+  if (startBtn) {
+    if (mode === 'FOCUS') {
+      startBtn.innerHTML = '▶ Start Focus';
+      startBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+      startBtn.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.4)';
+    } else if (mode === 'SHORT_BREAK') {
+      startBtn.innerHTML = '▶ Start Break';
+      startBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      startBtn.style.boxShadow = '0 4px 14px rgba(16, 185, 129, 0.4)';
+    } else {
+      startBtn.innerHTML = '▶ Start Long Break';
+      startBtn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+      startBtn.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
+    }
+  }
+
+  // Highlight matching preset chip
+  document.querySelectorAll('.preset-chip').forEach(c => {
+    if (c.textContent.includes(`${mins} min`)) {
+      c.classList.add('active');
+    } else {
+      c.classList.remove('active');
+    }
+  });
+
+  renderTimerUI();
+
+  if (autoStart) {
+    startFocusTimer();
+  }
+}
+
+function updatePomodoroStatusUI() {
+  const badge = document.getElementById('pomodoroCycleBadge');
+  const desc = document.getElementById('pomodoroModeDesc');
+  if (!badge || !desc) return;
+
+  badge.className = 'pomodoro-cycle-badge';
+  if (pomodoroMode === 'FOCUS') {
+    badge.classList.add('badge-focus');
+    badge.textContent = `🍅 Cycle ${pomodoroCycle} of 4`;
+    desc.textContent = 'Stay focused on your task';
+  } else if (pomodoroMode === 'SHORT_BREAK') {
+    badge.classList.add('badge-short-break');
+    badge.textContent = `☕ Short Break (${pomodoroCycle}/4)`;
+    desc.textContent = '5-minute rest & recharge';
+  } else if (pomodoroMode === 'LONG_BREAK') {
+    badge.classList.add('badge-long-break');
+    badge.textContent = `🌴 Long Break (4/4 Complete)`;
+    desc.textContent = '15-minute deep relaxation';
+  }
+}
+
 function selectDuration(mins, btn) {
   document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -2419,13 +2598,32 @@ function renderTimerUI() {
   const ratio = timerTotalSec > 0 ? timerSeconds / timerTotalSec : 1;
   const dial = document.getElementById('dialProgress');
   dial.style.strokeDashoffset = CIRC_DASH * (1 - ratio);
-  dial.style.stroke = ratio > 0.45 ? 'var(--p-light)' : ratio > 0.18 ? 'var(--amber)' : 'var(--red)';
+
+  // Distinct color per Pomodoro mode
+  if (pomodoroMode === 'SHORT_BREAK') {
+    dial.style.stroke = '#10b981';
+    dial.style.filter = 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.45))';
+  } else if (pomodoroMode === 'LONG_BREAK') {
+    dial.style.stroke = '#3b82f6';
+    dial.style.filter = 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.45))';
+  } else {
+    // FOCUS mode
+    dial.style.stroke = ratio > 0.2 ? '#ef4444' : '#dc2626';
+    dial.style.filter = 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.45))';
+  }
 }
 
 function startFocusTimer() {
   if (timerInterval) return;
   if (timerSeconds <= 0) resetFocusTimer();
-  document.getElementById('timerStatusLabel').textContent = 'Focusing...';
+
+  if (pomodoroMode === 'FOCUS') {
+    document.getElementById('timerStatusLabel').textContent = 'Focusing...';
+  } else if (pomodoroMode === 'SHORT_BREAK') {
+    document.getElementById('timerStatusLabel').textContent = 'Resting...';
+  } else {
+    document.getElementById('timerStatusLabel').textContent = 'Relaxing...';
+  }
   document.getElementById('startTimerBtn').style.opacity = '0.5';
 
   timerInterval = setInterval(() => {
@@ -2435,13 +2633,33 @@ function startFocusTimer() {
     } else {
       clearInterval(timerInterval);
       timerInterval = null;
-      document.getElementById('timerStatusLabel').textContent = 'Session Done! 🎉';
       document.getElementById('startTimerBtn').style.opacity = '1';
-      playChimeBell();
-      fireConfetti();
-      toast('⏰ Focus session complete! Take a well-deserved break! 🎉', 'success', 6000);
+      onTimerCompleted();
     }
   }, 1000);
+}
+
+function onTimerCompleted() {
+  playChimeBell();
+  fireConfetti();
+
+  if (pomodoroMode === 'FOCUS') {
+    if (pomodoroCycle < 4) {
+      toast(`🎉 Focus Cycle ${pomodoroCycle} complete! Starting 5-minute short break.`, 'success', 5000);
+      switchPomodoroMode('SHORT_BREAK', true);
+    } else {
+      toast('🏆 4 Focus cycles completed! Starting 15-minute long break. Fantastic job! 🌴', 'success', 6000);
+      switchPomodoroMode('LONG_BREAK', true);
+    }
+  } else if (pomodoroMode === 'SHORT_BREAK') {
+    pomodoroCycle++;
+    toast(`☕ Break finished! Starting Focus Cycle ${pomodoroCycle} of 4.`, 'info', 5000);
+    switchPomodoroMode('FOCUS', true);
+  } else if (pomodoroMode === 'LONG_BREAK') {
+    pomodoroCycle = 1;
+    toast('🌴 Long break completed! Resetting to Focus Cycle 1 of 4. Ready to focus!', 'info', 5000);
+    switchPomodoroMode('FOCUS', true);
+  }
 }
 
 function pauseFocusTimer() {
@@ -2456,8 +2674,9 @@ function pauseFocusTimer() {
 
 function resetFocusTimer() {
   pauseFocusTimer();
-  const v = parseInt(document.getElementById('customMinutesInput').value, 10) || 10;
-  timerTotalSec = timerSeconds = v * 60;
+  const mins = MODE_DURATIONS[pomodoroMode] || 25;
+  document.getElementById('customMinutesInput').value = mins;
+  timerTotalSec = timerSeconds = mins * 60;
   document.getElementById('timerStatusLabel').textContent = 'Ready';
   document.getElementById('startTimerBtn').style.opacity = '1';
   renderTimerUI();
@@ -2480,7 +2699,7 @@ function esc(str) {
 (async function initialize() {
   refreshProfileUI();
   await Promise.all([loadTasks(), loadStreak()]);
-  renderTimerUI();
+  switchPomodoroMode('FOCUS', false);
 })();
 </script>
 </body>

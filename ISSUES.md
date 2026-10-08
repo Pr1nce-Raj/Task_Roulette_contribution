@@ -148,6 +148,6 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `timer`
 - **Description**: Implement a complete Pomodoro cycle (25 min focus $\rightarrow$ 5 min short break $\rightarrow$ repeat 4x $\rightarrow$ 15 min long break) with automatic mode switching.
 - **Tasks**:
-  - [ ] Add state machine for `FOCUS`, `SHORT_BREAK`, and `LONG_BREAK`.
-  - [ ] Add visual badge indicating current cycle (e.g., "🍅 Cycle 2 of 4").
-  - [ ] Prompt user when break starts and ends with custom colors.
+  - [x] Add state machine for `FOCUS`, `SHORT_BREAK`, and `LONG_BREAK`.
+  - [x] Add visual badge indicating current cycle (e.g., "🍅 Cycle 2 of 4").
+  - [x] Prompt user when break starts and ends with custom colors.
