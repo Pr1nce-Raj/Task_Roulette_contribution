@@ -118,9 +118,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `ci/cd`, `automation`
 - **Description**: Set up automated tests on pull requests and pushes to ensure code compiles and starts properly on Linux and Windows runners.
 - **Tasks**:
-  - [ ] Create `.github/workflows/ci.yml`.
-  - [ ] Add steps to compile `TaskRouletteServer.java` with SQLite driver on JDK 17.
-  - [ ] Run automated API endpoint smoke tests using curl.
+  - [x] Create `.github/workflows/ci.yml`.
+  - [x] Add steps to compile `TaskRouletteServer.java` with SQLite driver on JDK 17.
+  - [x] Run automated API endpoint smoke tests using curl.
 
 ---
 

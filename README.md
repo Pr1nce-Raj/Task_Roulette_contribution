@@ -1,5 +1,7 @@
 # 🎡 Task Roulette
 
+[![CI](https://github.com/dhirajkumar-09/Task_Roulette/actions/workflows/ci.yml/badge.svg)](https://github.com/dhirajkumar-09/Task_Roulette/actions/workflows/ci.yml)
+
 **Can't decide what to work on? Let the wheel choose.**
 
 Task Roulette is a gamified focus-task manager. Add your tasks, spin the roulette wheel, and the app picks one for you and starts a focus timer. Complete tasks every day to build a streak.

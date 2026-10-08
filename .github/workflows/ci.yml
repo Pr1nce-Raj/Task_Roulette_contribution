@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build & Smoke Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Compile TaskRouletteServer
+        run: |
+          mkdir -p out
+          javac -cp "lib/sqlite-jdbc.jar" -d out src/TaskRouletteServer.java
+
+      - name: Start server and run smoke tests
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            CP="out;lib/sqlite-jdbc.jar"
+          else
+            CP="out:lib/sqlite-jdbc.jar"
+          fi
+
+          export PORT=8080
+          export DB_PATH="taskroulette_test.db"
+
+          echo "Starting server with classpath: $CP..."
+          java -cp "$CP" --enable-native-access=ALL-UNNAMED TaskRouletteServer > server.log 2>&1 &
+          SERVER_PID=$!
+
+          echo "Waiting for server to become ready on port 8080..."
+          READY=0
+          for i in {1..30}; do
+            if curl -s -f http://localhost:8080/api/tasks -H "X-User-Id: ci-tester" > /dev/null 2>&1; then
+              READY=1
+              echo "Server is ready!"
+              break
+            fi
+            sleep 1
+          done
+
+          if [ $READY -ne 1 ]; then
+            echo "Server failed to start within 30 seconds. Logs:"
+            cat server.log
+            exit 1
+          fi
+
+          echo "Running smoke test: GET /api/tasks"
+          curl -s -f -X GET http://localhost:8080/api/tasks -H "X-User-Id: ci-tester"
+          echo ""
+
+          echo "Running smoke test: POST /api/tasks"
+          POST_STATUS=$(curl -s -o /tmp/post_out.json -w "%{http_code}" -X POST http://localhost:8080/api/tasks \
+            -H "Content-Type: application/json" \
+            -H "X-User-Id: ci-tester" \
+            -d '{"text": "CI Automated Test Task", "priority": "HIGH"}')
+
+          if [ "$POST_STATUS" -ne 201 ]; then
+            echo "POST /api/tasks failed with HTTP status $POST_STATUS"
+            cat server.log
+            exit 1
+          fi
+          echo "POST /api/tasks succeeded (HTTP $POST_STATUS)"
+
+          echo "Running smoke test: GET /api/streak"
+          curl -s -f -X GET http://localhost:8080/api/streak -H "X-User-Id: ci-tester"
+          echo ""
+
+          echo "Stopping server (PID $SERVER_PID)..."
+          kill $SERVER_PID 2>/dev/null || true
+          echo "Smoke tests passed!"
+
+      - name: Dump server logs on failure
+        if: failure()
+        run: |
+          if [ -f server.log ]; then
+            echo "=== SERVER LOGS ==="
+            cat server.log
+          fi
+
+      - name: Clean up test artifacts
+        if: always()
+        run: |
+          rm -f taskroulette_test.db taskroulette_test.db-journal server.log /tmp/post_out.json
