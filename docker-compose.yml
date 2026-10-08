@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  task-roulette:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task-roulette
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DB_PATH=/app/data/taskroulette.db
+      - STATIC_DIR=/app/static
+    volumes:
+      - taskroulette_data:/app/data
+
+volumes:
+  taskroulette_data:
+    driver: local

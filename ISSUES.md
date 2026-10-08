@@ -108,9 +108,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `devops`, `infrastructure`
 - **Description**: Containerize the Java application so anyone can run it with a single command without installing local JDK manually.
 - **Tasks**:
-  - [ ] Create multi-stage `Dockerfile` with Eclipse Temurin Java 17.
-  - [ ] Add `docker-compose.yml` mapping port 8080 and mounting SQLite volume for database persistence.
-  - [ ] Update `README.md` with Docker run instructions.
+  - [x] Create multi-stage `Dockerfile` with Eclipse Temurin Java 17.
+  - [x] Add `docker-compose.yml` mapping port 8080 and mounting SQLite volume for database persistence.
+  - [x] Update `README.md` with Docker run instructions.
 
 ---
 
