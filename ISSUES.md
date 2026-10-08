@@ -38,9 +38,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `audio`
 - **Description**: Provide multiple sound packs (e.g., Casino Roulette, 8-Bit Arcade, Soft Zen Chimes) instead of a single synthesizer sound set.
 - **Tasks**:
-  - [ ] Create Web Audio oscillator presets for each theme.
-  - [ ] Add a sound theme selector dropdown in settings.
-  - [ ] Save selected theme in `localStorage`.
+  - [x] Create Web Audio oscillator presets for each theme.
+  - [x] Add a sound theme selector dropdown in settings.
+  - [x] Save selected theme in `localStorage`.
 
 ---
 

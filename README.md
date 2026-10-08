@@ -52,7 +52,7 @@ Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and
 ### 🎨 Experience
 | Feature | Description |
 |---|---|
-| **Sound Effects** | Wheel ticking, win fanfare and timer chime, created with the Web Audio API. Mute toggle included. |
+| **Sound Effects** | Customizable audio themes (Casino Roulette 🎰, 8-Bit Arcade 👾, Soft Zen Chimes 🧘) using Web Audio API synthesis. Mute toggle included. |
 | **Dark / Light Mode** | Theme toggle, remembered in the browser. |
 | **Responsive Design** | Works from large monitors down to 375px phone screens. |
 | **Docker Ready** | Multi-stage Dockerfile and automatic `PORT` binding for cloud deployment. |
