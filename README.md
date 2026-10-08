@@ -1,17 +1,32 @@
 # 🎡 Task Roulette
 
+[![CI](https://github.com/dhirajkumar-09/Task_Roulette/actions/workflows/ci.yml/badge.svg)](https://github.com/dhirajkumar-09/Task_Roulette/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Java 17](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
+[![Live Demo](https://img.shields.io/badge/Demo-Live%20on%20Vercel-success.svg)](https://taskroulette1.vercel.app/)
+
 **Can't decide what to work on? Let the wheel choose.**
 
 Task Roulette is a gamified focus-task manager. Add your tasks, spin the roulette wheel, and the app picks one for you and starts a focus timer. Complete tasks every day to build a streak.
 
 Built with **Java 17** (plain `HttpServer` + SQLite) and **vanilla HTML, CSS and JavaScript**. No frameworks, no npm, no build tools.
 
-🔗 **Live demo:** https://taskroulette1.vercel.app/
+🔗 **Live demo:** [https://taskroulette1.vercel.app/](https://taskroulette1.vercel.app/)
+
+---
+
+## 📸 Preview
+
+<p align="center">
+  <img src="docs/preview.svg" alt="Task Roulette UI Preview" width="100%">
+</p>
 
 ---
 
 ## 📑 Table of Contents
 
+- [Preview](#-preview)
 - [Features](#-features)
 - [How It Works](#-how-it-works)
 - [Tech Stack](#-tech-stack)
@@ -114,14 +129,20 @@ Then open **http://localhost:8080/**
 
 ### Option B: Run with Docker
 
+Run with Docker Compose (includes persistent database volume):
+```bash
+docker compose up --build
+```
+
+Or build and run manually:
 ```bash
 docker build -t task-roulette .
-docker run -p 8080:8080 task-roulette
+docker run -p 8080:8080 -v taskroulette_data:/app/data task-roulette
 ```
 
 Then open **http://localhost:8080/**
 
-> The server reads the port from the `PORT` environment variable (default `8080`) and binds to `0.0.0.0`.
+> The server reads the port from the `PORT` environment variable (default `8080`) and binds to `0.0.0.0`. Persistent database storage is mounted at `/app/data`.
 
 ---
 
@@ -136,7 +157,7 @@ All endpoints accept an `X-User-Id` header to separate users.
 | Method | Endpoint | Body | Description |
 |---|---|---|---|
 | `GET` | `/api/tasks` | none | List all tasks of the user |
-| `POST` | `/api/tasks` | `{"text": "...", "priority": "HIGH|MED|LOW"}` | Create a task (priority defaults to `MED`, returns `201 Created`) |
+| `POST` | `/api/tasks` | `{"text": "...", "priority": "HIGH\|MED\|LOW"}` | Create a task (priority defaults to `MED`, returns `201 Created`) |
 | `PUT` | `/api/tasks/{id}` | `{"completed": true}`, `{"text": "..."}` or `{"priority": "..."}` | Update a task. Completing a task also updates the streak log. |
 | `DELETE` | `/api/tasks/{id}` | none | Delete one task |
 | `DELETE` | `/api/tasks/completed` | none | Delete all completed tasks |
@@ -153,6 +174,14 @@ All endpoints accept an `X-User-Id` header to separate users.
 |---|---|---|---|
 | `GET` | `/api/user` | none | Returns `{ id, name }` |
 | `POST` | `/api/user` | `{"name": "..."}` | Update the display name |
+
+### Backup & Restore
+
+| Method | Endpoint | Query / Body | Description |
+|---|---|---|---|
+| `GET` | `/api/export?format=json` | none | Download tasks and completion streak history as JSON |
+| `GET` | `/api/export?format=csv` | none | Download tasks as spreadsheet-compatible CSV |
+| `POST` | `/api/import` | JSON or CSV content | Import backup file with automated deduplication |
 
 **Example**
 
@@ -204,18 +233,25 @@ The repository also includes a `render.yaml` file for Render configuration.
 
 ```
 Task_Roulette/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                # Automated compilation & API smoke test workflow
+├── docs/
+│   └── preview.svg               # Application visual preview vector diagram
 ├── src/
 │   └── TaskRouletteServer.java   # Backend: HTTP server, SQLite access, JSON handling
 ├── static/
 │   └── index.html                # Frontend: single-page app (HTML, CSS, JS)
 ├── lib/
 │   └── sqlite-jdbc.jar           # SQLite JDBC driver
-├── Dockerfile                    # Multi-stage Docker build
+├── Dockerfile                    # Multi-stage Docker build (Eclipse Temurin 17)
+├── docker-compose.yml            # Docker Compose orchestration with persistent SQLite volume
 ├── .dockerignore                 # Files excluded from the Docker build
 ├── render.yaml                   # Render deployment configuration
 ├── vercel.json                   # Vercel configuration
 ├── ISSUES.md                     # Planned features and issue descriptions
 ├── PROGRESS.md                   # Development log
+├── LICENSE                       # MIT License
 ├── .gitignore
 └── README.md
 ```
@@ -226,8 +262,8 @@ Task_Roulette/
 
 Planned features are tracked in the [Issues](https://github.com/dhirajkumar-09/Task_Roulette/issues) tab (descriptions are also in [`ISSUES.md`](ISSUES.md)).
 
-- [ ] Task priority and tags (High, Medium, Low)
-- [ ] Weighted roulette wheel based on priority
+- [x] Task priority and tags (High, Medium, Low)
+- [x] Weighted roulette wheel based on priority
 - [ ] Prevent duplicate task names
 - [ ] Edit task text directly in the list
 - [ ] Pomodoro cycle with short and long breaks
@@ -235,7 +271,7 @@ Planned features are tracked in the [Issues](https://github.com/dhirajkumar-09/T
 - [ ] Keyboard shortcuts
 - [ ] Sound themes and a volume slider
 - [ ] Auto-sync theme with the system dark/light preference
-- [ ] Export and import tasks (JSON / CSV)
+- [x] Export and import tasks (JSON / CSV)
 - [ ] Productivity stats and heatmap calendar
 - [ ] Rate limiting and input sanitization
 - [ ] `docker-compose.yml` for one-command setup
@@ -245,16 +281,34 @@ Planned features are tracked in the [Issues](https://github.com/dhirajkumar-09/T
 
 ## 🤝 Contributing
 
-Contributions are welcome!
+Contributions are warmly welcome! Whether you are fixing a bug, adding an enhancement, or polishing documentation, here is how you can help:
 
-1. **Fork** the repository.
-2. Pick an issue from the [Issues](https://github.com/dhirajkumar-09/Task_Roulette/issues) tab (look for `good first issue`).
-3. Create a branch: `git checkout -b feature/my-feature`
-4. Commit your changes and link the issue: `git commit -m "Add my feature, Fixes #12"`
-5. Push the branch and open a **Pull Request**.
+1. **Fork** the repository to your GitHub account.
+2. **Clone** your fork locally:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/Task_Roulette.git
+   cd Task_Roulette
+   ```
+3. **Pick an issue** from the [Issues](https://github.com/dhirajkumar-09/Task_Roulette/issues) tab.
+4. **Create a topic branch**:
+   ```bash
+   git checkout -b feature/issue-name
+   ```
+5. **Develop and verify**:
+   ```bash
+   # Compile Java backend
+   javac -cp "lib/sqlite-jdbc.jar" -d out src/TaskRouletteServer.java
+   ```
+6. **Commit with a descriptive message**:
+   ```bash
+   git commit -m "feat: descriptive title (fixes #12)"
+   ```
+7. **Push and open a Pull Request**: Submit your PR targeting `main` with a clear explanation of changes.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is open-source and licensed under the [MIT License](LICENSE).
+See the [`LICENSE`](LICENSE) file for complete terms.
+

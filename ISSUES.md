@@ -151,3 +151,19 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
   - [ ] Add state machine for `FOCUS`, `SHORT_BREAK`, and `LONG_BREAK`.
   - [ ] Add visual badge indicating current cycle (e.g., "🍅 Cycle 2 of 4").
   - [ ] Prompt user when break starts and ends with custom colors.
+
+---
+
+### Issue 16: [Docs] Improve README with Comprehensive Setup Guide
+- **Label**: `documentation`, `good first issue`
+- **Description**: Improve README with project overview, UI screenshots, badges, local/Docker setup guide, API reference, and contributing guidelines.
+- **Tasks**:
+  - [x] Write project description at the top with live demo link.
+  - [x] Add high-definition UI preview graphic (`docs/preview.svg`).
+  - [x] Add comprehensive feature list and tech stack documentation.
+  - [x] Add detailed local setup steps for Windows and macOS/Linux.
+  - [x] Add Docker and Docker Compose run instructions.
+  - [x] Add complete API table with all endpoints and examples.
+  - [x] Add project structure layout and contributing guide.
+  - [x] Add MIT license and status badges.
+

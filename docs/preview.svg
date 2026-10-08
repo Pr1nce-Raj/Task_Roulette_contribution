@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </linearGradient>
+
+    <!-- Card Background -->
+    <linearGradient id="card-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.9" />
+    </linearGradient>
+
+    <!-- Bezel Gold Gradient -->
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="50%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+
+    <!-- Ring Gradient -->
+    <linearGradient id="timer-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+
+    <filter id="glow-purple" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <style>
+    .window-frame { fill: #0b0f19; rx: 16px; stroke: #334155; stroke-width: 1.5px; }
+    .title-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 700; fill: #f8fafc; font-size: 20px; }
+    .sub-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; fill: #94a3b8; font-size: 13px; }
+    .mono-timer { font-family: "SF Mono", Monaco, Consolas, monospace; font-weight: 700; fill: #ffffff; font-size: 34px; letter-spacing: 1px; }
+    .task-label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 500; fill: #e2e8f0; font-size: 14px; }
+    .badge-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 700; font-size: 10px; }
+  </style>
+
+  <!-- Desktop Window Canvas -->
+  <rect width="960" height="540" fill="url(#bg-grad)" />
+
+  <g transform="translate(30, 25)" filter="url(#shadow)">
+    <!-- App Main Container -->
+    <rect width="900" height="490" class="window-frame" />
+
+    <!-- Window Controls & Header Bar -->
+    <rect width="900" height="48" rx="16" fill="#1e293b" />
+    <rect y="36" width="900" height="12" fill="#1e293b" />
+    <circle cx="28" cy="24" r="6" fill="#ef4444" />
+    <circle cx="48" cy="24" r="6" fill="#f59e0b" />
+    <circle cx="68" cy="24" r="6" fill="#10b981" />
+
+    <!-- App Title & Stats in Header -->
+    <text x="96" y="30" class="title-text">🎡 Task Roulette</text>
+    <rect x="250" y="12" width="125" height="24" rx="12" fill="#312e81" stroke="#4f46e5" stroke-width="1" />
+    <text x="264" y="28" class="badge-text" fill="#a5b4fc">🔥 7-DAY STREAK</text>
+
+    <!-- Header Actions -->
+    <rect x="740" y="12" width="68" height="24" rx="6" fill="#334155" />
+    <text x="750" y="28" class="badge-text" fill="#e2e8f0">📊 STATS</text>
+    <rect x="818" y="12" width="60" height="24" rx="6" fill="#334155" />
+    <text x="828" y="28" class="badge-text" fill="#e2e8f0">💾 DATA</text>
+
+    <!-- Left Column: Wheel & Focus Timer -->
+    <g transform="translate(35, 70)">
+      <!-- Panel Card -->
+      <rect width="380" height="395" rx="12" fill="url(#card-grad)" stroke="#334155" stroke-width="1" />
+
+      <!-- Roulette Wheel Graphic -->
+      <g transform="translate(190, 140)">
+        <!-- Outer Gold Ring -->
+        <circle r="105" fill="none" stroke="url(#gold-grad)" stroke-width="10" filter="url(#shadow)" />
+        <circle r="100" fill="#0f172a" />
+
+        <!-- Wheel Sectors -->
+        <path d="M 0 0 L 0 -100 A 100 100 0 0 1 86 -50 Z" fill="#ef4444" opacity="0.85" />
+        <path d="M 0 0 L 86 -50 A 100 100 0 0 1 86 50 Z" fill="#3b82f6" opacity="0.85" />
+        <path d="M 0 0 L 86 50 A 100 100 0 0 1 0 100 Z" fill="#10b981" opacity="0.85" />
+        <path d="M 0 0 L 0 100 A 100 100 0 0 1 -86 50 Z" fill="#f59e0b" opacity="0.85" />
+        <path d="M 0 0 L -86 50 A 100 100 0 0 1 -86 -50 Z" fill="#8b5cf6" opacity="0.85" />
+        <path d="M 0 0 L -86 -50 A 100 100 0 0 1 0 -100 Z" fill="#ec4899" opacity="0.85" />
+
+        <!-- Center Hub -->
+        <circle r="26" fill="url(#gold-grad)" />
+        <circle r="18" fill="#e11d48" filter="url(#shadow)" />
+        <circle r="6" fill="#ffffff" opacity="0.6" />
+
+        <!-- Pointer Indicator at Top -->
+        <polygon points="-12,-115 12,-115 0,-92" fill="#ef4444" stroke="#ffffff" stroke-width="2" />
+      </g>
+
+      <!-- Focus Timer Countdown Section -->
+      <g transform="translate(30, 275)">
+        <rect width="320" height="100" rx="10" fill="#0b0f19" stroke="#1e293b" stroke-width="1" />
+        
+        <!-- Timer SVG Ring -->
+        <circle cx="55" cy="50" r="32" fill="none" stroke="#334155" stroke-width="6" />
+        <circle cx="55" cy="50" r="32" fill="none" stroke="url(#timer-ring-grad)" stroke-width="6"
+                stroke-dasharray="200" stroke-dashoffset="45" stroke-linecap="round" />
+        <text x="110" y="44" class="mono-timer">24:59</text>
+        <text x="112" y="66" class="sub-text" fill="#818cf8">🍅 Pomodoro Cycle 1 of 4</text>
+        <rect x="235" y="32" width="70" height="34" rx="6" fill="#10b981" />
+        <text x="249" y="54" class="badge-text" fill="#ffffff">PAUSE</text>
+      </g>
+    </g>
+
+    <!-- Right Column: Task List & Controls -->
+    <g transform="translate(440, 70)">
+      <rect width="425" height="395" rx="12" fill="url(#card-grad)" stroke="#334155" stroke-width="1" />
+
+      <!-- Add Task Input Bar -->
+      <g transform="translate(20, 20)">
+        <rect width="385" height="42" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1" />
+        <text x="15" y="26" class="sub-text" fill="#64748b">Add a new focus task...</text>
+        <rect x="270" y="6" width="46" height="30" rx="5" fill="#ef4444" opacity="0.2" stroke="#ef4444" stroke-width="1" />
+        <text x="277" y="25" class="badge-text" fill="#fca5a5">HIGH</text>
+        <rect x="325" y="6" width="52" height="30" rx="5" fill="#6366f1" />
+        <text x="338" y="25" class="badge-text" fill="#ffffff">+ ADD</text>
+      </g>
+
+      <!-- Task Items -->
+      <g transform="translate(20, 80)">
+        <!-- Task Item 1: In Focus Active -->
+        <g transform="translate(0, 0)">
+          <rect width="385" height="60" rx="8" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5" />
+          <circle cx="25" cy="30" r="10" fill="none" stroke="#818cf8" stroke-width="2" />
+          <text x="48" y="28" class="task-label">Refactor Backend REST Handlers</text>
+          <text x="48" y="46" class="sub-text" fill="#a5b4fc">🔥 Selected by Roulette • In Focus</text>
+          <rect x="315" y="16" width="55" height="22" rx="4" fill="#ef4444" opacity="0.2" stroke="#ef4444" stroke-width="1" />
+          <text x="325" y="31" class="badge-text" fill="#fca5a5">HIGH 3x</text>
+        </g>
+
+        <!-- Task Item 2 -->
+        <g transform="translate(0, 70)">
+          <rect width="385" height="52" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+          <circle cx="25" cy="26" r="10" fill="none" stroke="#64748b" stroke-width="2" />
+          <text x="48" y="31" class="task-label">Setup GitHub Actions CI Workflow</text>
+          <rect x="315" y="15" width="55" height="22" rx="4" fill="#3b82f6" opacity="0.2" stroke="#3b82f6" stroke-width="1" />
+          <text x="327" y="30" class="badge-text" fill="#93c5fd">MED 2x</text>
+        </g>
+
+        <!-- Task Item 3 -->
+        <g transform="translate(0, 132)">
+          <rect width="385" height="52" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+          <circle cx="25" cy="26" r="10" fill="none" stroke="#64748b" stroke-width="2" />
+          <text x="48" y="31" class="task-label">Dark / Light Mode System Auto-Sync</text>
+          <rect x="315" y="15" width="55" height="22" rx="4" fill="#10b981" opacity="0.2" stroke="#10b981" stroke-width="1" />
+          <text x="327" y="30" class="badge-text" fill="#6ee7b7">LOW 1x</text>
+        </g>
+
+        <!-- Task Item 4: Completed -->
+        <g transform="translate(0, 194)">
+          <rect width="385" height="52" rx="8" fill="#0b0f19" opacity="0.7" stroke="#1e293b" stroke-width="1" />
+          <circle cx="25" cy="26" r="10" fill="#10b981" />
+          <path d="M 20 26 L 24 30 L 30 22" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+          <text x="48" y="31" class="task-label" fill="#64748b" text-decoration="line-through">Design Weighted Roulette Physics</text>
+          <rect x="315" y="15" width="55" height="22" rx="4" fill="#64748b" opacity="0.2" />
+          <text x="326" y="30" class="badge-text" fill="#94a3b8">DONE</text>
+        </g>
+      </g>
+
+      <!-- Bottom Spin Button Bar -->
+      <g transform="translate(20, 340)">
+        <rect width="385" height="42" rx="8" fill="#6366f1" filter="url(#glow-purple)" />
+        <text x="135" y="27" class="title-text" font-size="16px">🎲 SPIN ROULETTE WHEEL</text>
+      </g>
+    </g>
+  </g>
+</svg>
