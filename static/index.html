@@ -673,10 +673,26 @@ ul { list-style: none; }
 .act-btn:hover { transform: scale(1.15); }
 .act-check { background: var(--green-bg); color: var(--green); }
 .act-check:hover { background: #10b981; color: #fff; }
+.act-edit  { background: var(--surface); color: var(--muted); border: 1px solid var(--border); font-size: 0.82rem; }
+.act-edit:hover { color: var(--p-light); border-color: var(--p-light); }
 .act-undo  { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
 .act-undo:hover { color: var(--p-light); border-color: var(--p-light); }
 .act-del   { background: var(--red-bg); color: var(--red); }
 .act-del:hover { background: #ef4444; color: #fff; }
+
+.task-edit-input {
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  border: 1.5px solid var(--p-light);
+  border-radius: var(--r-xs);
+  background: var(--surface-solid);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--p-glow);
+}
 
 .empty-state {
   text-align: center;
@@ -2018,10 +2034,11 @@ function renderTasks() {
 
     li.innerHTML = `
       <span class="task-dot" style="background:${t.completed ? 'var(--subtle)' : dotColor}"></span>
-      <span class="task-title">${esc(t.text)}</span>
+      <span class="task-title" id="task-title-${t.id}" title="${t.completed ? '' : 'Double-click to edit'}" ondblclick="startEditTask(${t.id})">${esc(t.text)}</span>
       <span class="priority-badge ${prioClass}">${prio}</span>
       ${isFocus ? '<span class="focus-tag">FOCUS</span>' : ''}
       <div class="task-actions">
+        ${!t.completed ? `<button class="act-btn act-edit" title="Edit Task" onclick="startEditTask(${t.id})">✏️</button>` : ''}
         ${t.completed
           ? `<button class="act-btn act-undo" title="Mark Active" onclick="toggleTaskStatus(${t.id}, false)">↩</button>`
           : `<button class="act-btn act-check" title="Mark Done" onclick="toggleTaskStatus(${t.id}, true)">✓</button>`}
@@ -2093,6 +2110,71 @@ async function clearCompletedTasks() {
   } catch (err) {
     toast(err.message, 'error');
   }
+}
+
+function startEditTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task || task.completed) return;
+  const titleEl = document.getElementById(`task-title-${id}`);
+  if (!titleEl || titleEl.querySelector('input')) return;
+
+  const currentText = task.text;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'task-edit-input';
+  input.value = currentText;
+  input.maxLength = 150;
+
+  titleEl.innerHTML = '';
+  titleEl.appendChild(input);
+  input.focus();
+  input.select();
+
+  let finished = false;
+
+  const save = async () => {
+    if (finished) return;
+    finished = true;
+    const newText = input.value.trim();
+    if (!newText) {
+      toast('Task text cannot be empty', 'warning');
+      cancel();
+      return;
+    }
+    if (newText === currentText) {
+      cancel();
+      return;
+    }
+    try {
+      await api(`/api/tasks/${id}`, 'PUT', { text: newText });
+      task.text = newText;
+      titleEl.textContent = newText;
+      drawWheel();
+      toast('Task renamed! ✏️', 'success', 2000);
+    } catch (err) {
+      toast(err.message, 'error');
+      cancel();
+    }
+  };
+
+  const cancel = () => {
+    finished = true;
+    titleEl.textContent = currentText;
+  };
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      save();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancel();
+    }
+  });
+
+  input.addEventListener('blur', () => {
+    save();
+  });
 }
 
 /* ════════════════════════════════════════════

@@ -89,9 +89,9 @@ You can copy and paste these directly into [GitHub Issues](https://github.com/dh
 - **Label**: `enhancement`, `ui/ux`
 - **Description**: Allow double-clicking or clicking an edit icon ✏️ on an existing task card to edit its text without deleting and re-adding.
 - **Tasks**:
-  - [ ] Add ✏️ edit button to task action buttons.
-  - [ ] Convert task title to editable inline input on click.
-  - [ ] Send `PUT /api/tasks/{id}` with new text on Enter or blur.
+  - [x] Add ✏️ edit button to task action buttons.
+  - [x] Convert task title to editable inline input on click.
+  - [x] Send `PUT /api/tasks/{id}` with new text on Enter or blur.
 
 ---
 
